@@ -1,47 +1,14 @@
-import { ResolverFactory, type NapiResolveOptions, type ResolveResult } from 'oxc-resolver';
+import { ResolverFactory, type NapiResolveOptions } from 'oxc-resolver';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-/**
- * Cache for resolved modules
- */
-class ResolverCache {
-  private cache = new Map<string, string>();
-  private maxSize: number;
-
-  constructor(maxSize = 10000) {
-    this.maxSize = maxSize;
-  }
-
-  get(key: string): string | undefined {
-    return this.cache.get(key);
-  }
-
-  set(key: string, value: string): void {
-    if (this.cache.size >= this.maxSize) {
-      // Simple LRU: remove first item
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) {
-        this.cache.delete(firstKey);
-      }
-    }
-    this.cache.set(key, value);
-  }
-
-  clear(): void {
-    this.cache.clear();
-  }
-}
 
 /**
  * Main resolver class that wraps oxc-resolver with TypeScript support
  */
 export class TypeScriptResolver {
   private oxcResolver: ResolverFactory;
-  private cache: ResolverCache;
 
-  constructor(options: { cacheSize?: number; tsconfigPath?: string } = {}) {
-    this.cache = new ResolverCache(options.cacheSize);
+  constructor(options: { tsconfigPath?: string } = {}) {
     
     // Initialize oxc-resolver with TypeScript-friendly settings
     const resolverOptions: NapiResolveOptions = {
@@ -73,15 +40,6 @@ export class TypeScriptResolver {
    * Resolve a module specifier
    */
   resolve(specifier: string, parent: string): string | null {
-    // Create cache key
-    const cacheKey = `${specifier}:${parent}`;
-    
-    // Check cache first
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
     // Convert parent URL to path if needed
     const parentPath = parent.startsWith('file://')
       ? fileURLToPath(parent)
@@ -89,12 +47,11 @@ export class TypeScriptResolver {
 
     const parentDir = dirname(parentPath);
 
-    // Use oxc-resolver which handles tsconfig path aliases automatically
+    // Use oxc-resolver which handles tsconfig path aliases and caching automatically
     try {
       const result = this.oxcResolver.sync(parentDir, specifier);
-      
+
       if (result?.path) {
-        this.cache.set(cacheKey, result.path);
         return result.path;
       }
     } catch (error) {
@@ -108,13 +65,13 @@ export class TypeScriptResolver {
    * Clear the resolution cache
    */
   clearCache(): void {
-    this.cache.clear();
+    this.oxcResolver.clearCache();
   }
 }
 
 /**
  * Create a resolver instance
  */
-export function createResolver(options?: { cacheSize?: number; tsconfigPath?: string }) {
+export function createResolver(options?: { tsconfigPath?: string }) {
   return new TypeScriptResolver(options);
 }

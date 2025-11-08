@@ -51,7 +51,6 @@ import { createResolver } from 'node-typescript-resolver';
 
 // Create a resolver instance
 const resolver = createResolver({
-  cacheSize: 10000, // Optional: cache size (default: 10000)
   tsconfigPath: './tsconfig.json', // Optional: explicit tsconfig path
 });
 
@@ -109,9 +108,9 @@ Following the proven approach from [node-ts-resolver](https://github.com/niieani
    - oxc-resolver for fast filesystem lookups
 
 3. **Efficient caching**
-   - All custom resolutions are cached using an LRU strategy
-   - Configurable cache size (default: 10,000 entries)
-   - Minimizes filesystem access for repeated imports
+   - All resolutions are cached automatically by oxc-resolver
+   - Built-in caching minimizes filesystem access for repeated imports
+   - Cache can be cleared when needed via `clearCache()`
 
 This approach ensures:
 - ✅ No performance impact on standard Node.js module resolution
@@ -123,7 +122,7 @@ This approach ensures:
 This package is designed for high performance:
 
 - Built on top of the fast [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)
-- Efficient LRU caching to avoid repeated filesystem lookups
+- Built-in caching from oxc-resolver to avoid repeated filesystem lookups
 - Minimal overhead in the resolution path
 
 ## Comparison with Similar Tools
@@ -163,7 +162,6 @@ npm run test:ts
 Creates a new resolver instance.
 
 **Options:**
-- `cacheSize` (number, optional): Maximum number of entries in the resolution cache. Default: 10000
 - `tsconfigPath` (string, optional): Path to tsconfig.json. If not provided, the resolver will auto-detect it.
 
 **Returns:** `TypeScriptResolver` instance
