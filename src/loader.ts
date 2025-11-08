@@ -48,7 +48,8 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
 
     // Try our custom resolver as a fallback
     try {
-      const resolved = await resolver.resolve(specifier, parentURL);
+      // Pass context.conditions to the resolver so it uses the correct conditions
+      const resolved = await resolver.resolve(specifier, parentURL, context.conditions);
 
       if (resolved) {
         // Convert to URL
