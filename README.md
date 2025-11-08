@@ -25,11 +25,8 @@ npm install node-typescript-resolver
 Use the loader to enable TypeScript-aware module resolution in your Node.js applications:
 
 ```bash
-# Using --loader flag (Node.js 18-20)
-node --loader node-typescript-resolver/loader your-app.js
-
-# Using --import flag (Node.js 20.6+)
-node --import node-typescript-resolver/loader your-app.js
+# Using --import flag (Node.js 22.7.0+)
+node --import node-typescript-resolver your-app.js
 ```
 
 This allows you to write imports like:
