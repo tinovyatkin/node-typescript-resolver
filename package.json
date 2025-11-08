@@ -1,0 +1,58 @@
+{
+  "name": "node-typescript-resolver",
+  "version": "0.1.0",
+  "description": "Node.js loader to close the gap between built-in TypeScript support and TS imports resolution",
+  "main": "./dist/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./loader": {
+      "types": "./dist/loader.d.ts",
+      "import": "./dist/loader.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test test/resolver.test.js test/loader.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "typescript",
+    "resolver",
+    "loader",
+    "node",
+    "import",
+    "esm",
+    "extensionless",
+    "tsconfig",
+    "paths"
+  ],
+  "author": "Konstantin Vyatkin <tino@vtkn.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tinovyatkin/node-typescript-resolver.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tinovyatkin/node-typescript-resolver/issues"
+  },
+  "homepage": "https://github.com/tinovyatkin/node-typescript-resolver#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "oxc-resolver": "^11.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "typescript": "^5.6.3"
+  }
+}
