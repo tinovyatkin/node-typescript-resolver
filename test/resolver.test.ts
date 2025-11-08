@@ -21,6 +21,7 @@ describe('TypeScriptResolver', () => {
     
     // Create a subdirectory
     await mkdir(join(testDir, 'lib'), { recursive: true });
+    await writeFile(join(testDir, 'lib', 'index.ts'), 'export const libIndex = true;');
     await writeFile(join(testDir, 'lib', 'helper.ts'), 'export const helper = true;');
 
     // Create tsconfig.json with path aliases
@@ -46,80 +47,80 @@ describe('TypeScriptResolver', () => {
   });
 
   describe('basic resolution', () => {
-    it('should resolve .ts files', () => {
-      const resolved = resolver.resolve('./module.ts', join(testDir, 'index.ts'));
+    it('should resolve .ts files', async () => {
+      const resolved = await resolver.resolve('./module.ts', join(testDir, 'index.ts'));
       assert.ok(resolved);
       assert.ok(resolved.endsWith('module.ts'));
     });
 
-    it('should resolve relative paths', () => {
-      const resolved = resolver.resolve('./lib/helper', join(testDir, 'index.ts'));
+    it('should resolve relative paths', async () => {
+      const resolved = await resolver.resolve('./lib/helper', join(testDir, 'index.ts'));
       assert.ok(resolved);
       assert.ok(resolved.includes('lib') && resolved.endsWith('helper.ts'));
     });
 
-    it('should prefer .ts over .js', () => {
-      const resolved = resolver.resolve('./module', join(testDir, 'index.ts'));
+    it('should prefer .ts over .js', async () => {
+      const resolved = await resolver.resolve('./module', join(testDir, 'index.ts'));
       assert.ok(resolved);
       assert.ok(resolved.endsWith('module.ts'), 'Should resolve to .ts file');
     });
   });
 
   describe('extensionless imports', () => {
-    it('should resolve imports without extensions', () => {
-      const resolved = resolver.resolve('./module', join(testDir, 'index.ts'));
+    it('should resolve imports without extensions', async () => {
+      const resolved = await resolver.resolve('./module', join(testDir, 'index.ts'));
       assert.ok(resolved);
       assert.ok(resolved.endsWith('.ts') || resolved.endsWith('.js'));
     });
 
-    it('should resolve directory imports to index files', () => {
-      const resolved = resolver.resolve('.', join(testDir, 'lib', 'helper.ts'));
+    it('should resolve directory imports to index files', async () => {
+      const resolved = await resolver.resolve('.', join(testDir, 'lib', 'helper.ts'));
       assert.ok(resolved);
       // Should resolve to either index.ts or the directory resolution
     });
   });
 
   describe('path aliases', () => {
-    it('should resolve path alias with wildcard', () => {
-      const resolved = resolver.resolve('@lib/helper', join(testDir, 'index.ts'));
+    it('should resolve path alias with wildcard', async () => {
+      const resolved = await resolver.resolve('@lib/helper', join(testDir, 'index.ts'));
       assert.ok(resolved, 'Should resolve @lib/helper alias');
       assert.ok(resolved.includes('lib') && resolved.endsWith('helper.ts'));
     });
 
-    it('should resolve exact path alias', () => {
-      const resolved = resolver.resolve('@utils', join(testDir, 'index.ts'));
+    it('should resolve exact path alias', async () => {
+      const resolved = await resolver.resolve('@utils', join(testDir, 'index.ts'));
       assert.ok(resolved, 'Should resolve @utils alias');
       assert.ok(resolved.includes('lib') && resolved.endsWith('helper.ts'));
     });
   });
 
   describe('caching', () => {
-    it('should cache resolved modules', () => {
+    it('should cache resolved modules', async () => {
       const specifier = './module.ts';
       const parent = join(testDir, 'index.ts');
-      
-      const resolved1 = resolver.resolve(specifier, parent);
-      const resolved2 = resolver.resolve(specifier, parent);
-      
+
+      const resolved1 = await resolver.resolve(specifier, parent);
+      const resolved2 = await resolver.resolve(specifier, parent);
+
       assert.strictEqual(resolved1, resolved2);
     });
 
-    it('should clear cache when requested', () => {
+    it('should clear cache when requested', async () => {
       resolver.clearCache();
-      const resolved = resolver.resolve('./module.ts', join(testDir, 'index.ts'));
+      const resolved = await resolver.resolve('./module.ts', join(testDir, 'index.ts'));
       assert.ok(resolved);
     });
   });
 
   describe('edge cases', () => {
-    it('should return null for non-existent modules', () => {
-      const resolved = resolver.resolve('./non-existent', join(testDir, 'index.ts'));
+    it('should return null for non-existent modules', async () => {
+      const resolved = await resolver.resolve('./non-existent', join(testDir, 'index.ts'));
       assert.strictEqual(resolved, null);
     });
 
-    it('should handle file:// URLs as parent', () => {
+    it('should handle file:// URLs as parent', async () => {
       const parentURL = `file://${join(testDir, 'index.ts')}`;
-      const resolved = resolver.resolve('./module.ts', parentURL);
+      const resolved = await resolver.resolve('./module.ts', parentURL);
       assert.ok(resolved);
       assert.ok(resolved.endsWith('module.ts'));
     });

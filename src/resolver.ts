@@ -39,7 +39,7 @@ export class TypeScriptResolver {
   /**
    * Resolve a module specifier
    */
-  resolve(specifier: string, parent: string): string | null {
+  async resolve(specifier: string, parent: string): Promise<string | null> {
     // Convert parent URL to path if needed
     const parentPath = parent.startsWith('file://')
       ? fileURLToPath(parent)
@@ -47,9 +47,9 @@ export class TypeScriptResolver {
 
     const parentDir = dirname(parentPath);
 
-    // Use oxc-resolver which handles tsconfig path aliases and caching automatically
+    // Use oxc-resolver's async method for better performance and scalability
     try {
-      const result = this.oxcResolver.sync(parentDir, specifier);
+      const result = await this.oxcResolver.async(parentDir, specifier);
 
       if (result?.path) {
         return result.path;

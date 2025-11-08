@@ -52,8 +52,8 @@ export const resolve: ResolveHook = async (
 
     // Try our custom resolver as a fallback
     try {
-      const resolved = resolver.resolve(specifier, parentURL);
-      
+      const resolved = await resolver.resolve(specifier, parentURL);
+
       if (resolved) {
         // Convert to URL
         const url = pathToFileURL(resolved).href;
