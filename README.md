@@ -127,7 +127,7 @@ This package is designed for high performance:
 
 ## Requirements
 
-- Node.js >= 20.0.0
+- Node.js >= 22.7.0
 
 ## API Reference
 

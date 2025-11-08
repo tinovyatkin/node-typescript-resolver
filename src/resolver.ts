@@ -216,7 +216,7 @@ export class TypeScriptResolver {
 
       // Try each replacement
       for (const replacement of replacements) {
-        const substituted = replacement.replace('*', match.captured);
+        const substituted = replacement.replaceAll('*', match.captured);
         const fullPath = resolve(baseUrl, substituted);
 
         // Try to resolve this path with oxc-resolver

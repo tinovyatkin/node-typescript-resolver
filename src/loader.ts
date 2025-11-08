@@ -1,36 +1,11 @@
+import type { ResolveHook } from 'node:module';
 import { createResolver } from './resolver.js';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 
 /**
  * Singleton resolver instance with caching
  */
 const resolver = createResolver();
-
-/**
- * Context passed to resolve hook
- */
-interface ResolveContext {
-  conditions: string[];
-  importAttributes?: Record<string, string>;
-  parentURL?: string;
-}
-
-/**
- * Result returned from resolve hook
- */
-interface ResolveResult {
-  url: string;
-  format?: string;
-  shortCircuit?: boolean;
-}
-
-/**
- * Next function type for chaining
- */
-type NextResolve = (
-  specifier: string,
-  context?: ResolveContext
-) => ResolveResult | Promise<ResolveResult>;
 
 /**
  * Determine if a specifier should be handled by this resolver
@@ -62,11 +37,11 @@ function shouldResolve(specifier: string): boolean {
  * - Extensionless imports
  * - tsconfig.json path aliases
  */
-export async function resolve(
-  specifier: string,
-  context: ResolveContext,
-  nextResolve: NextResolve
-): Promise<ResolveResult> {
+export const resolve: ResolveHook = async (
+  specifier,
+  context,
+  nextResolve
+) => {
   // Check if we should handle this specifier
   if (!shouldResolve(specifier)) {
     return nextResolve(specifier, context);
@@ -106,4 +81,4 @@ export async function resolve(
 
   // Fall back to default resolver
   return nextResolve(specifier, context);
-}
+};
