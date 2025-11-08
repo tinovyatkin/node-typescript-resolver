@@ -16,14 +16,11 @@ This is a Node.js loader that provides TypeScript-aware module resolution with m
 # Build TypeScript to dist/
 npm run build
 
-# Run all tests (builds first, then runs compiled tests)
+# Run all tests (runs TypeScript tests directly with --experimental-strip-types)
 npm test
 
-# Run tests directly with TypeScript (requires Node 22.7.0+)
-npm run test:ts
-
-# Test a single file
-node --test test/resolver.test.js
+# Test a single file with TypeScript support
+node --test --experimental-strip-types test/resolver.test.ts
 ```
 
 ## Architecture
