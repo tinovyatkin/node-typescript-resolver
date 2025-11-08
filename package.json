@@ -21,8 +21,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "npm run build && node --test test/resolver.test.js test/loader.test.js",
-    "test:ts": "node --test --experimental-strip-types test/resolver.test.ts test/loader.test.js",
+    "test": "node --test --experimental-strip-types test/resolver.test.ts test/loader.test.js",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
