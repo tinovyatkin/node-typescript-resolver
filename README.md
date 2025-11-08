@@ -10,7 +10,7 @@ This package provides a fast and efficient TypeScript module resolver for Node.j
 - ⚡ **Efficient caching** for fast repeated resolutions
 - 🔧 **Built on oxc-resolver** for blazing-fast resolution
 
-This package combines functionality similar to [node-ts-resolver](https://github.com/niieani/node-ts-resolver) and [extensionless](https://github.com/barhun/extensionless) while using the high-performance [oxc-resolver](https://www.npmjs.com/package/oxc-resolver) under the hood.
+This package uses the high-performance [oxc-resolver](https://www.npmjs.com/package/oxc-resolver) under the hood for blazing-fast resolution.
 
 ## Installation
 
@@ -95,7 +95,7 @@ import { format } from "@utils";
 
 ### Non-Intrusive Resolution
 
-Following the proven approach from [node-ts-resolver](https://github.com/niieani/node-ts-resolver) and [extensionless](https://github.com/barhun/extensionless), this loader is designed to be **non-intrusive**:
+This loader is designed to be **non-intrusive**:
 
 1. **Always tries default Node.js resolution first**
    - Lets Node.js handle all normal module resolution
@@ -125,16 +125,6 @@ This package is designed for high performance:
 - Built on top of the fast [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)
 - Built-in caching from oxc-resolver to avoid repeated filesystem lookups
 - Minimal overhead in the resolution path
-
-## Comparison with Similar Tools
-
-| Feature               | node-typescript-resolver | node-ts-resolver | extensionless |
-| --------------------- | ------------------------ | ---------------- | ------------- |
-| TypeScript resolution | ✅                       | ✅               | ❌            |
-| Extensionless imports | ✅                       | ❌               | ✅            |
-| Path aliases          | ✅                       | ✅               | ❌            |
-| Caching               | ✅                       | Limited          | ❌            |
-| Fast resolver         | ✅ (oxc)                 | ❌               | ❌            |
 
 ## Requirements
 
