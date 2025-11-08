@@ -1,6 +1,7 @@
 import type { ResolveHook } from "node:module";
 import { pathToFileURL } from "node:url";
-import { createResolver } from "./resolver.js";
+
+import { createResolver } from "./resolver.ts";
 
 /**
  * Singleton resolver instance with caching
@@ -55,16 +56,21 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
         // Convert to URL
         const url = pathToFileURL(resolved).href;
 
-        // Determine format based on extension
+        // Determine format and import attributes based on extension
         let format: string | undefined;
+        let importAttributes: Record<string, string> | undefined;
+
         if (resolved.endsWith(".json")) {
           format = "json";
+          importAttributes = { type: "json" };
         } else if (resolved.endsWith(".wasm")) {
           format = "wasm";
+          importAttributes = { type: "wasm" };
         }
 
         return {
           format,
+          importAttributes,
           shortCircuit: true,
           url,
         };
