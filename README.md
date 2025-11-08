@@ -97,15 +97,29 @@ import { format } from '@utils';
 
 ## How It Works
 
-1. **Resolution Strategy**: The resolver tries multiple strategies in order:
-   - TypeScript path aliases (if configured)
-   - oxc-resolver with TypeScript-aware extensions
-   - Fallback to default Node.js resolution
+### Non-Intrusive Resolution
 
-2. **Extension Resolution**: When resolving imports, the resolver checks for these extensions in order:
-   - `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.json`
+Following the proven approach from [node-ts-resolver](https://github.com/niieani/node-ts-resolver) and [extensionless](https://github.com/barhun/extensionless), this loader is designed to be **non-intrusive**:
 
-3. **Caching**: All resolved paths are cached for performance. The cache uses a simple LRU strategy with a configurable size.
+1. **Always tries default Node.js resolution first**
+   - Lets Node.js handle all normal module resolution
+   - Only activates when Node.js fails with `ERR_MODULE_NOT_FOUND`
+
+2. **Fallback resolution** - When default resolution fails, the loader tries:
+   - TypeScript path aliases (if configured via tsconfig.json)
+   - TypeScript file extensions (.ts, .tsx, .mts, .cts)
+   - Extensionless imports with multiple extension candidates
+   - oxc-resolver for fast filesystem lookups
+
+3. **Efficient caching**
+   - All custom resolutions are cached using an LRU strategy
+   - Configurable cache size (default: 10,000 entries)
+   - Minimizes filesystem access for repeated imports
+
+This approach ensures:
+- ✅ No performance impact on standard Node.js module resolution
+- ✅ No interference with existing working imports
+- ✅ Only enhances resolution when needed
 
 ## Performance
 
