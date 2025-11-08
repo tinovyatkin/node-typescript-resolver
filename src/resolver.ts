@@ -1,18 +1,6 @@
 import { ResolverFactory, type NapiResolveOptions, type ResolveResult } from 'oxc-resolver';
-import { readFileSync } from 'node:fs';
-import { dirname, resolve, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-
-/**
- * Interface for tsconfig.json structure
- */
-interface TsConfig {
-  compilerOptions?: {
-    baseUrl?: string;
-    paths?: Record<string, string[]>;
-  };
-  extends?: string;
-}
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Cache for resolved modules
@@ -46,90 +34,17 @@ class ResolverCache {
 }
 
 /**
- * TypeScript path alias configuration
- */
-interface PathAliasConfig {
-  baseUrl: string;
-  paths: Record<string, string[]>;
-}
-
-/**
- * Parse tsconfig.json and extract path aliases
- */
-function parseTsConfig(tsconfigPath: string): PathAliasConfig | null {
-  try {
-    const content = readFileSync(tsconfigPath, 'utf-8');
-    const tsconfig: TsConfig = JSON.parse(content);
-    
-    let config = tsconfig;
-    
-    // Handle extends
-    if (config.extends) {
-      const extendedPath = resolve(dirname(tsconfigPath), config.extends);
-      const extendedConfig = parseTsConfig(extendedPath);
-      if (extendedConfig) {
-        // Merge configs (current overrides extended)
-        config = {
-          ...JSON.parse(readFileSync(extendedPath, 'utf-8')),
-          ...config,
-          compilerOptions: {
-            ...JSON.parse(readFileSync(extendedPath, 'utf-8')).compilerOptions,
-            ...config.compilerOptions,
-          },
-        };
-      }
-    }
-    
-    if (!config.compilerOptions?.paths) {
-      return null;
-    }
-    
-    const baseUrl = config.compilerOptions.baseUrl || '.';
-    const basePath = resolve(dirname(tsconfigPath), baseUrl);
-    
-    return {
-      baseUrl: basePath,
-      paths: config.compilerOptions.paths,
-    };
-  } catch (error) {
-    return null;
-  }
-}
-
-/**
- * Find tsconfig.json starting from a directory
- */
-function findTsConfig(startDir: string): string | null {
-  let currentDir = startDir;
-  const root = '/';
-  
-  while (currentDir !== root) {
-    const tsconfigPath = join(currentDir, 'tsconfig.json');
-    try {
-      readFileSync(tsconfigPath, 'utf-8');
-      return tsconfigPath;
-    } catch {
-      currentDir = dirname(currentDir);
-    }
-  }
-  
-  return null;
-}
-
-/**
  * Main resolver class that wraps oxc-resolver with TypeScript support
  */
 export class TypeScriptResolver {
   private oxcResolver: ResolverFactory;
   private cache: ResolverCache;
-  private pathAliases: PathAliasConfig | null = null;
-  private tsconfigPath: string | null = null;
 
   constructor(options: { cacheSize?: number; tsconfigPath?: string } = {}) {
     this.cache = new ResolverCache(options.cacheSize);
     
     // Initialize oxc-resolver with TypeScript-friendly settings
-    this.oxcResolver = new ResolverFactory({
+    const resolverOptions: NapiResolveOptions = {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json'],
       conditionNames: ['import', 'require', 'node', 'default'],
       mainFields: ['module', 'main'],
@@ -138,13 +53,20 @@ export class TypeScriptResolver {
         '.mjs': ['.mts', '.mjs'],
         '.cjs': ['.cts', '.cjs'],
       },
-    });
+    };
 
-    // Load tsconfig if provided
+    // Use oxc-resolver's built-in tsconfig support
     if (options.tsconfigPath) {
-      this.tsconfigPath = options.tsconfigPath;
-      this.pathAliases = parseTsConfig(options.tsconfigPath);
+      resolverOptions.tsconfig = {
+        configFile: options.tsconfigPath,
+        references: 'auto',
+      };
+    } else {
+      // Auto-detect tsconfig.json
+      resolverOptions.tsconfig = 'auto';
     }
+
+    this.oxcResolver = new ResolverFactory(resolverOptions);
   }
 
   /**
@@ -167,24 +89,7 @@ export class TypeScriptResolver {
 
     const parentDir = dirname(parentPath);
 
-    // Auto-detect tsconfig if not set
-    if (!this.tsconfigPath) {
-      this.tsconfigPath = findTsConfig(parentDir);
-      if (this.tsconfigPath) {
-        this.pathAliases = parseTsConfig(this.tsconfigPath);
-      }
-    }
-
-    // Try to resolve with path aliases first
-    if (this.pathAliases) {
-      const aliasResolved = this.resolveWithPathAlias(specifier, parentDir);
-      if (aliasResolved) {
-        this.cache.set(cacheKey, aliasResolved);
-        return aliasResolved;
-      }
-    }
-
-    // Use oxc-resolver
+    // Use oxc-resolver which handles tsconfig path aliases automatically
     try {
       const result = this.oxcResolver.sync(parentDir, specifier);
       
@@ -197,73 +102,6 @@ export class TypeScriptResolver {
     }
 
     return null;
-  }
-
-  /**
-   * Resolve using TypeScript path aliases
-   */
-  private resolveWithPathAlias(specifier: string, parentDir: string): string | null {
-    if (!this.pathAliases) {
-      return null;
-    }
-
-    const { baseUrl, paths } = this.pathAliases;
-
-    // Try each path alias pattern
-    for (const [pattern, replacements] of Object.entries(paths)) {
-      const match = this.matchPathPattern(specifier, pattern);
-      if (!match) continue;
-
-      // Try each replacement
-      for (const replacement of replacements) {
-        const substituted = replacement.replaceAll('*', match.captured);
-        const fullPath = resolve(baseUrl, substituted);
-
-        // Try to resolve this path with oxc-resolver
-        try {
-          const result = this.oxcResolver.sync(dirname(fullPath), `./${substituted.split('/').pop()}`);
-          if (result?.path) {
-            return result.path;
-          }
-        } catch {
-          // Try next replacement
-        }
-
-        // Try direct file resolution
-        try {
-          const result = this.oxcResolver.sync(baseUrl, substituted);
-          if (result?.path) {
-            return result.path;
-          }
-        } catch {
-          // Continue to next replacement
-        }
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Match a specifier against a path pattern (supports * wildcard)
-   */
-  private matchPathPattern(specifier: string, pattern: string): { captured: string } | null {
-    const starIndex = pattern.indexOf('*');
-    
-    if (starIndex === -1) {
-      // No wildcard, exact match
-      return specifier === pattern ? { captured: '' } : null;
-    }
-
-    const prefix = pattern.slice(0, starIndex);
-    const suffix = pattern.slice(starIndex + 1);
-
-    if (!specifier.startsWith(prefix) || !specifier.endsWith(suffix)) {
-      return null;
-    }
-
-    const captured = specifier.slice(prefix.length, specifier.length - suffix.length);
-    return { captured };
   }
 
   /**
