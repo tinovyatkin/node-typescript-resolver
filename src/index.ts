@@ -25,11 +25,11 @@
  * ```
  */
 
-import { register } from 'node:module';
+import { register } from "node:module";
 
 // Register the loader with Node.js
-register('./loader.js', import.meta.url);
+register("./loader.js", import.meta.url);
 
+export { createResolver, TypeScriptResolver } from "./resolver.js";
 // Also export the resolver for programmatic use
-export { TypeScriptResolver, createResolver } from './resolver.js';
-export type { NapiResolveOptions, ResolveResult } from 'oxc-resolver';
+export type { NapiResolveOptions, ResolveResult } from "oxc-resolver";

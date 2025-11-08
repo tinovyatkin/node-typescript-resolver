@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2023",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2022"],
+    "lib": ["ES2023"],
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": true,
@@ -14,8 +14,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "verbatimModuleSyntax": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/"],
   "exclude": ["node_modules", "dist", "test"]
 }

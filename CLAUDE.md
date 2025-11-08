@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a Node.js loader that provides TypeScript-aware module resolution with minimal performance overhead. It bridges the gap between Node.js's built-in TypeScript support and proper TS import resolution, supporting extensionless imports and tsconfig path aliases.
 
 **Key dependencies:**
+
 - `oxc-resolver`: Fast resolver that handles the heavy lifting of file resolution and tsconfig parsing
 - Node.js >= 22.7.0 required (uses native module loader hooks)
 
@@ -28,11 +29,13 @@ node --test --experimental-strip-types test/resolver.test.ts
 The codebase follows a **three-layer structure**:
 
 ### 1. Public API Layer (`src/index.ts`)
+
 - Exports `createResolver()` factory and `TypeScriptResolver` class
 - Re-exports oxc-resolver types for consumer convenience
 - Simple entry point with minimal logic
 
 ### 2. Loader Layer (`src/loader.ts`)
+
 - Implements Node.js `ResolveHook` interface for the module loader API
 - **Critical design principle: Non-intrusive resolution**
   - Always calls `nextResolve()` first to let Node.js handle standard resolution
@@ -42,6 +45,7 @@ The codebase follows a **three-layer structure**:
 - Converts resolved paths to `file://` URLs and determines module format
 
 ### 3. Core Resolver Layer (`src/resolver.ts`)
+
 - `TypeScriptResolver` class wraps `oxc-resolver` with TS-specific configuration
 - `ResolverCache` implements simple LRU eviction (removes first entry when full)
 - **Extension alias mapping**: Maps `.js` → `.ts/.tsx`, `.mjs` → `.mts`, `.cjs` → `.cts`
@@ -54,7 +58,9 @@ The codebase follows a **three-layer structure**:
 ## Key Design Patterns
 
 ### Non-Intrusive Resolution (Loader Pattern)
+
 The loader follows the battle-tested approach from `node-ts-resolver` and `extensionless`:
+
 1. Always try default Node.js resolution first via `nextResolve()`
 2. Only run custom logic when Node.js returns `ERR_MODULE_NOT_FOUND`
 3. Skip built-in modules (`node:`, `http:`, `https:`, `data:`)
@@ -63,6 +69,7 @@ The loader follows the battle-tested approach from `node-ts-resolver` and `exten
 This pattern is critical - do not change it unless you understand the performance implications.
 
 ### Caching Strategy
+
 - Simple LRU: When cache is full, delete the first (oldest) entry
 - Cache key format: `${specifier}:${parent}`
 - Cache stores final resolved paths (strings)
@@ -70,13 +77,16 @@ This pattern is critical - do not change it unless you understand the performanc
 - Trade-off: Simple implementation over true LRU (no access-time tracking)
 
 ### Extension Priority
+
 oxc-resolver tries extensions in order: `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.json`
+
 - TypeScript files take precedence over JavaScript
 - Combined with `extensionAlias` mapping, this enables proper TS resolution
 
 ## Testing Patterns
 
 Tests use Node.js native test runner (`node:test`):
+
 - Create temporary test directories in `tmpdir()`
 - Set up fixtures with specific tsconfig.json configurations
 - Use `before()` for setup and `after()` for cleanup
@@ -84,6 +94,7 @@ Tests use Node.js native test runner (`node:test`):
 - Verify caching behavior and edge cases (file:// URLs, null returns)
 
 Test organization:
+
 - `test/resolver.test.ts`: Unit tests for the resolver class
 - `test/loader.test.js`: Integration tests for the Node.js loader hook
 
@@ -98,6 +109,7 @@ Test organization:
 ## Path Alias Resolution
 
 When working with path alias features, remember that oxc-resolver handles all the complexity:
+
 - No need to manually parse tsconfig.json
 - Set `tsconfig: 'auto'` for auto-detection or provide explicit `configFile` path
 - oxc-resolver follows TypeScript's exact resolution algorithm

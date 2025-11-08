@@ -6,7 +6,7 @@ This package provides a fast and efficient TypeScript module resolver for Node.j
 
 - ✨ **TypeScript file resolution** (.ts, .tsx, .mts, .cts)
 - 🚀 **Extensionless imports** (import './module' resolves to './module.ts')
-- 🎯 **tsconfig.json path aliases** (e.g., '@lib/*', '@utils')
+- 🎯 **tsconfig.json path aliases** (e.g., '@lib/\*', '@utils')
 - ⚡ **Efficient caching** for fast repeated resolutions
 - 🔧 **Built on oxc-resolver** for blazing-fast resolution
 
@@ -33,13 +33,13 @@ This allows you to write imports like:
 
 ```javascript
 // Import without extension - resolves to helper.ts or helper.js
-import { helper } from './helper';
+import { helper } from "./helper";
 
 // Import with TypeScript path alias (from tsconfig.json)
-import { utils } from '@lib/utils';
+import { utils } from "@lib/utils";
 
 // Standard imports still work
-import { something } from './module.ts';
+import { something } from "./module.ts";
 ```
 
 ### Programmatic API
@@ -47,19 +47,19 @@ import { something } from './module.ts';
 You can also use the resolver programmatically in your code:
 
 ```typescript
-import { createResolver } from 'node-typescript-resolver';
+import { createResolver } from "node-typescript-resolver";
 
 // Create a resolver instance
 const resolver = createResolver({
-  tsconfigPath: './tsconfig.json', // Optional: explicit tsconfig path
+  tsconfigPath: "./tsconfig.json", // Optional: explicit tsconfig path
 });
 
 // Resolve a module
-const resolved = resolver.resolve('./module', '/path/to/parent.ts');
+const resolved = resolver.resolve("./module", "/path/to/parent.ts");
 console.log(resolved); // /path/to/module.ts
 
 // Resolve with path alias
-const aliasResolved = resolver.resolve('@lib/helper', '/path/to/parent.ts');
+const aliasResolved = resolver.resolve("@lib/helper", "/path/to/parent.ts");
 console.log(aliasResolved); // /path/to/lib/helper.ts
 
 // Clear cache if needed
@@ -86,9 +86,9 @@ The resolver automatically detects and uses `tsconfig.json` for path alias resol
 With this configuration, you can use imports like:
 
 ```typescript
-import { Button } from '@components/Button';
-import { helper } from '@lib/helpers';
-import { format } from '@utils';
+import { Button } from "@components/Button";
+import { helper } from "@lib/helpers";
+import { format } from "@utils";
 ```
 
 ## How It Works
@@ -113,6 +113,7 @@ Following the proven approach from [node-ts-resolver](https://github.com/niieani
    - Cache can be cleared when needed via `clearCache()`
 
 This approach ensures:
+
 - ✅ No performance impact on standard Node.js module resolution
 - ✅ No interference with existing working imports
 - ✅ Only enhances resolution when needed
@@ -127,13 +128,13 @@ This package is designed for high performance:
 
 ## Comparison with Similar Tools
 
-| Feature | node-typescript-resolver | node-ts-resolver | extensionless |
-|---------|-------------------------|------------------|---------------|
-| TypeScript resolution | ✅ | ✅ | ❌ |
-| Extensionless imports | ✅ | ❌ | ✅ |
-| Path aliases | ✅ | ✅ | ❌ |
-| Caching | ✅ | Limited | ❌ |
-| Fast resolver | ✅ (oxc) | ❌ | ❌ |
+| Feature               | node-typescript-resolver | node-ts-resolver | extensionless |
+| --------------------- | ------------------------ | ---------------- | ------------- |
+| TypeScript resolution | ✅                       | ✅               | ❌            |
+| Extensionless imports | ✅                       | ❌               | ✅            |
+| Path aliases          | ✅                       | ✅               | ❌            |
+| Caching               | ✅                       | Limited          | ❌            |
+| Fast resolver         | ✅ (oxc)                 | ❌               | ❌            |
 
 ## Requirements
 
@@ -162,6 +163,7 @@ npm run test:ts
 Creates a new resolver instance.
 
 **Options:**
+
 - `tsconfigPath` (string, optional): Path to tsconfig.json. If not provided, the resolver will auto-detect it.
 
 **Returns:** `TypeScriptResolver` instance
@@ -173,6 +175,7 @@ Creates a new resolver instance.
 Resolves a module specifier relative to a parent file.
 
 **Parameters:**
+
 - `specifier`: The module specifier to resolve (e.g., './module', '@lib/helper')
 - `parent`: The absolute path or file:// URL of the parent module
 
