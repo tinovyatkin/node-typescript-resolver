@@ -129,6 +129,22 @@ This package is designed for high performance:
 
 - Node.js >= 22.7.0
 
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build the package
+npm run build
+
+# Run tests
+npm test
+
+# Run tests with TypeScript directly (Node.js 22.7.0+)
+npm run test:ts
+```
+
 ## API Reference
 
 ### `createResolver(options)`
