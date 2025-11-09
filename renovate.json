@@ -14,5 +14,14 @@
   "commitMessagePrefix": "chore(deps):",
   "semanticCommits": "enabled",
   "rebaseWhen": "conflicted",
-  "bumpVersion": "patch"
+  "packageRules": [
+    {
+      "matchDepTypes": ["dependencies"],
+      "postUpgradeTasks": {
+        "commands": ["npm version patch --no-git-tag-version"],
+        "fileFilters": ["package.json"],
+        "executionMode": "update"
+      }
+    }
+  ]
 }
