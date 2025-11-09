@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { execFile, type ExecFileException } from "node:child_process";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -10,7 +10,6 @@ const testDir = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(testDir, "..");
 // Use source TypeScript file directly - Node 22 can load .ts files
 // Need to use file:// URL for --import
-import { pathToFileURL } from "node:url";
 const loaderPath = pathToFileURL(join(rootDir, "src", "index.ts")).href;
 
 /**
