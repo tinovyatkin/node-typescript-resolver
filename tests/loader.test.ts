@@ -5,15 +5,29 @@ import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
 import { pathToFileURL } from "node:url";
 
-import { initialize, resolve } from "../src/loader.ts";
+import { initialize, resolve, resolveSync } from "../src/loader.ts";
+
+/**
+ * Create an ERR_MODULE_NOT_FOUND error
+ */
+function createModuleNotFoundError(): Error & { code: string } {
+  const error = new Error("Cannot find module") as Error & { code: string };
+  error.code = "ERR_MODULE_NOT_FOUND";
+  return error;
+}
+
+/**
+ * Mock nextResolve function (sync) that simulates Node.js failing to resolve a module
+ */
+function mockNextResolveSyncWithNotFound(): never {
+  throw createModuleNotFoundError();
+}
 
 /**
  * Mock nextResolve function that simulates Node.js failing to resolve a module
  */
 async function mockNextResolveWithNotFound(): Promise<never> {
-  const error = new Error("Cannot find module") as Error & { code: string };
-  error.code = "ERR_MODULE_NOT_FOUND";
-  throw error;
+  throw createModuleNotFoundError();
 }
 
 describe("Loader", () => {
@@ -175,6 +189,130 @@ describe("Loader", () => {
           return true;
         },
       );
+    });
+  });
+
+  describe("synchronous resolve", () => {
+    describe("import attributes", () => {
+      it("should set importAttributes for JSON files", () => {
+        const context = {
+          conditions: ["node", "import"],
+          importAttributes: {},
+          parentURL,
+        };
+
+        const result = resolveSync("./data.json", context, mockNextResolveSyncWithNotFound);
+
+        assert.notStrictEqual(result, null, "Should resolve JSON file");
+        assert.strictEqual(result.format, "json", "Format should be json");
+        assert.notStrictEqual(result.importAttributes, undefined, "Should have importAttributes");
+        assert.strictEqual(result.importAttributes?.type, "json", "Should have type: json");
+        assert.strictEqual(result.shortCircuit, true, "Should short circuit");
+        assert.strictEqual(result.url.endsWith("data.json"), true, "URL should point to data.json");
+      });
+
+      it("should set importAttributes for WASM files", () => {
+        const context = {
+          conditions: ["node", "import"],
+          importAttributes: {},
+          parentURL,
+        };
+
+        const result = resolveSync("./module.wasm", context, mockNextResolveSyncWithNotFound);
+
+        assert.notStrictEqual(result, null, "Should resolve WASM file");
+        assert.strictEqual(result.format, "wasm", "Format should be wasm");
+        assert.notStrictEqual(result.importAttributes, undefined, "Should have importAttributes");
+        assert.strictEqual(result.importAttributes?.type, "wasm", "Should have type: wasm");
+        assert.strictEqual(result.shortCircuit, true, "Should short circuit");
+        assert.strictEqual(
+          result.url.endsWith("module.wasm"),
+          true,
+          "URL should point to module.wasm",
+        );
+      });
+
+      it("should not set importAttributes for TypeScript files", () => {
+        const context = {
+          conditions: ["node", "import"],
+          importAttributes: {},
+          parentURL,
+        };
+
+        const result = resolveSync("./module.ts", context, mockNextResolveSyncWithNotFound);
+
+        assert.notStrictEqual(result, null, "Should resolve TypeScript file");
+        assert.strictEqual(result.format, undefined, "Format should be undefined for TS files");
+        assert.strictEqual(
+          result.importAttributes,
+          undefined,
+          "Should not have importAttributes for TS files",
+        );
+        assert.strictEqual(result.shortCircuit, true, "Should short circuit");
+        assert.strictEqual(result.url.endsWith("module.ts"), true, "URL should point to module.ts");
+      });
+
+      it("should resolve JSON via path alias with importAttributes", () => {
+        const context = {
+          conditions: ["node", "import"],
+          importAttributes: {},
+          parentURL,
+        };
+
+        const result = resolveSync("@data", context, mockNextResolveSyncWithNotFound);
+
+        assert.notStrictEqual(result, null, "Should resolve @data alias");
+        assert.strictEqual(result.format, "json", "Format should be json");
+        assert.notStrictEqual(result.importAttributes, undefined, "Should have importAttributes");
+        assert.strictEqual(result.importAttributes?.type, "json", "Should have type: json");
+        assert.strictEqual(result.url.endsWith("data.json"), true, "URL should point to data.json");
+      });
+    });
+
+    describe("non-intrusive resolution", () => {
+      it("should use Node.js resolution when it succeeds", () => {
+        const expectedUrl = "file:///resolved/module.js";
+        const mockNextResolve = () => ({
+          format: "module" as const,
+          shortCircuit: false,
+          url: expectedUrl,
+        });
+
+        const context = {
+          conditions: ["node", "import"],
+          importAttributes: {},
+          parentURL,
+        };
+
+        const result = resolveSync("some-package", context, mockNextResolve);
+
+        assert.strictEqual(result.url, expectedUrl, "Should return Node.js resolution result");
+        assert.strictEqual(result.format, "module");
+      });
+
+      it("should throw non-ERR_MODULE_NOT_FOUND errors", () => {
+        const customError = new Error("Permission denied") as Error & { code: string };
+        customError.code = "EACCES";
+
+        const mockNextResolve = () => {
+          throw customError;
+        };
+
+        const context = {
+          conditions: ["node", "import"],
+          importAttributes: {},
+          parentURL,
+        };
+
+        assert.throws(
+          () => resolveSync("./module.ts", context, mockNextResolve),
+          (error: Error & { code: string }) => {
+            assert.strictEqual(error.code, "EACCES");
+            assert.strictEqual(error.message, "Permission denied");
+            return true;
+          },
+        );
+      });
     });
   });
 });

@@ -19,7 +19,7 @@ export class TypeScriptResolver {
         ".js": [".ts", ".tsx", ".js"],
         ".mjs": [".mts", ".mjs"],
       },
-      extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json"],
+      extensions: [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".json"],
       mainFields: ["module", "main"],
       // Use tsconfig auto-detection for path aliases support
       tsconfig: options.tsconfigPath
@@ -46,13 +46,65 @@ export class TypeScriptResolver {
   }
 
   /**
-   * Resolve a module specifier with specific conditions
+   * Resolve a module specifier with specific conditions (async)
    */
   async resolve(
     specifier: string,
     parent: string | undefined,
     conditions: readonly string[] = ["node", "import"],
   ): Promise<null | string> {
+    const parentDir = this.getParentDirectory(parent);
+
+    // Get resolver with appropriate conditions
+    const resolver = this.getResolverForConditions(conditions);
+
+    // Use oxc-resolver's async method for better performance
+    try {
+      const result = await resolver.async(parentDir, specifier);
+
+      // oxc-resolver returns { path: string } on success or { error: string } on failure
+      if (result != null && "path" in result && result.path) {
+        return result.path;
+      }
+    } catch {
+      // Resolution failed
+    }
+
+    return null;
+  }
+
+  /**
+   * Resolve a module specifier with specific conditions (sync)
+   */
+  resolveSync(
+    specifier: string,
+    parent: string | undefined,
+    conditions: readonly string[] = ["node", "import"],
+  ): null | string {
+    const parentDir = this.getParentDirectory(parent);
+
+    // Get resolver with appropriate conditions
+    const resolver = this.getResolverForConditions(conditions);
+
+    // Use oxc-resolver's sync method
+    try {
+      const result = resolver.sync(parentDir, specifier);
+
+      // oxc-resolver returns { path: string } on success or { error: string } on failure
+      if (result != null && "path" in result && result.path) {
+        return result.path;
+      }
+    } catch {
+      // Resolution failed
+    }
+
+    return null;
+  }
+
+  /**
+   * Convert parent to directory path for resolution
+   */
+  private getParentDirectory(parent: string | undefined): string {
     // Convert parent URL to path if needed, fallback to cwd if undefined
     let parentPath: string;
     if (parent === undefined) {
@@ -73,22 +125,7 @@ export class TypeScriptResolver {
       parentDir = dirname(parentPath);
     }
 
-    // Get resolver with appropriate conditions
-    const resolver = this.getResolverForConditions(conditions);
-
-    // Use oxc-resolver's async method for better performance
-    try {
-      const result = await resolver.async(parentDir, specifier);
-
-      // oxc-resolver returns { path: string } on success or { error: string } on failure
-      if (result != null && "path" in result && result.path) {
-        return result.path;
-      }
-    } catch {
-      // Resolution failed
-    }
-
-    return null;
+    return parentDir;
   }
 
   /**

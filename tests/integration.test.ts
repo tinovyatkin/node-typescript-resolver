@@ -21,10 +21,9 @@ async function runFixture(
   try {
     const { stderr, stdout } = await execFileAsync(
       process.execPath,
-      ["--no-warnings", "--experimental-strip-types", "--import", loaderPath, fixturePath],
+      ["--import", loaderPath, fixturePath],
       {
         cwd: rootDir,
-        env: { ...process.env, NODE_NO_WARNINGS: "1" },
       },
     );
     return { exitCode: 0, stderr, stdout };
@@ -151,10 +150,9 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
       try {
         const { stdout } = await execFileAsync(
           process.execPath,
-          ["--no-warnings", "--experimental-strip-types", "--import", loaderPath, fixturePath],
+          ["--import", loaderPath, fixturePath],
           {
             cwd: fixtureDir,
-            env: { ...process.env, NODE_NO_WARNINGS: "1" },
           },
         );
 
@@ -169,6 +167,101 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
         };
         assert.fail(`Process should not throw. stderr: ${execError.stderr?.toString() ?? ""}`);
       }
+    });
+  });
+
+  describe("import.meta.resolve", () => {
+    it("should resolve TypeScript files via import.meta.resolve (sync hook)", async () => {
+      const fixturePath = join(testDir, "fixtures", "import-meta-resolve", "main.ts");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Resolved extensionless .ts import"),
+        `Expected to resolve extensionless .ts import. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Resolved .ts import with extension"),
+        `Expected to resolve .ts import with extension. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Resolved path alias"),
+        `Expected to resolve path alias. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Successfully imported resolved module"),
+        `Expected to import resolved module. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: import.meta.resolve with TypeScript files"),
+        `Expected success message. Got: ${result.stdout}`,
+      );
+    });
+  });
+
+  describe("CommonJS require", () => {
+    it("should resolve TypeScript files via require() (sync hook)", async () => {
+      const fixturePath = join(testDir, "fixtures", "commonjs-require", "main.cjs");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Required extensionless .ts module"),
+        `Expected to require extensionless .ts module. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Successfully accessed exported values"),
+        `Expected to access exported values. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Required .ts module with extension"),
+        `Expected to require .ts module with extension. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: CommonJS require() with TypeScript files"),
+        `Expected success message. Got: ${result.stdout}`,
+      );
+    });
+  });
+
+  describe("ESM createRequire", () => {
+    it("should resolve .cts files via createRequire() (sync hook)", async () => {
+      const fixturePath = join(testDir, "fixtures", "esm-create-require", "main.ts");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Required extensionless .cts module via createRequire"),
+        `Expected to require extensionless .cts module. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Successfully accessed exported values from .cts"),
+        `Expected to access exported values from .cts. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Required .cts module with extension via createRequire"),
+        `Expected to require .cts module with extension. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Successfully called function from required .cts module"),
+        `Expected to call function from .cts module. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: ESM createRequire() with CommonJS TypeScript files"),
+        `Expected success message. Got: ${result.stdout}`,
+      );
     });
   });
 });

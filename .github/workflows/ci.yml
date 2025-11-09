@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write # Required for OIDC authentication to Codecov
 
 jobs:
   ci:
@@ -41,3 +42,11 @@ jobs:
 
       - name: Run tests
         run: npm run test:ci
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./lcov.info
+          fail_ci_if_error: false
+          use_oidc: true
