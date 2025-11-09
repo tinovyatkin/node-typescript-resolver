@@ -65,35 +65,22 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
         throw error;
       }
 
+      // For ERR_PACKAGE_PATH_NOT_EXPORTED, try to resolve with 'types' condition
+      // This handles type-only packages like type-fest that only export types
+      if (error.code === "ERR_PACKAGE_PATH_NOT_EXPORTED") {
+        try {
+          return await tryResolveTypeOnlyPackage(specifier, context, nextResolve);
+        } catch {
+          // Types resolution also failed, continue with standard resolution
+        }
+      }
+
+      // Use standard resolution for other errors
       // oxc-resolver handles file:// URLs for paths, but needs bare specifiers for aliases
       const resolved = await resolver.resolve(resolveSpecifier, resolveParent, context.conditions);
 
       if (resolved) {
-        // Convert to URL
-        const url = pathToFileURL(resolved).href;
-
-        // Determine format and import attributes based on extension
-        let format: string | undefined;
-        let importAttributes: Record<string, string> | undefined;
-
-        if (resolved.endsWith(".json")) {
-          format = "json";
-          importAttributes = { type: "json" };
-        } else if (resolved.endsWith(".wasm")) {
-          format = "wasm";
-          importAttributes = { type: "wasm" };
-        } else if (resolved.endsWith(".mts")) {
-          format = "module-typescript";
-        } else if (resolved.endsWith(".cts")) {
-          format = "commonjs-typescript";
-        }
-
-        return {
-          format,
-          importAttributes,
-          shortCircuit: true,
-          url,
-        };
+        return formatResolvedResult(resolved);
       }
     } catch {
       // Custom resolver also failed, throw original error
@@ -162,31 +149,7 @@ export const resolveSync: ResolveHookSync = (specifier, context, nextResolve) =>
       );
 
       if (resolved) {
-        // Convert to URL
-        const url = pathToFileURL(resolved).href;
-
-        // Determine format and import attributes based on extension
-        let format: string | undefined;
-        let importAttributes: Record<string, string> | undefined;
-
-        if (resolved.endsWith(".json")) {
-          format = "json";
-          importAttributes = { type: "json" };
-        } else if (resolved.endsWith(".wasm")) {
-          format = "wasm";
-          importAttributes = { type: "wasm" };
-        } else if (resolved.endsWith(".mts")) {
-          format = "module-typescript";
-        } else if (resolved.endsWith(".cts")) {
-          format = "commonjs-typescript";
-        }
-
-        return {
-          format,
-          importAttributes,
-          shortCircuit: true,
-          url,
-        };
+        return formatResolvedResult(resolved);
       }
     } catch {
       // Custom resolver also failed, throw original error
@@ -199,8 +162,38 @@ export const resolveSync: ResolveHookSync = (specifier, context, nextResolve) =>
 };
 
 /**
+ * Format resolved file path as a ResolveHook result
+ */
+function formatResolvedResult(resolved: string): Awaited<ReturnType<ResolveHook>> {
+  const url = pathToFileURL(resolved).href;
+  let format: string | undefined;
+  let importAttributes: Record<string, string> | undefined;
+
+  if (resolved.endsWith(".json")) {
+    format = "json";
+    importAttributes = { type: "json" };
+  } else if (resolved.endsWith(".wasm")) {
+    format = "wasm";
+    importAttributes = { type: "wasm" };
+  } else if (resolved.endsWith(".mts")) {
+    format = "module-typescript";
+  } else if (resolved.endsWith(".cts")) {
+    format = "commonjs-typescript";
+  }
+  // Note: .d.ts files don't get a format - they're type declarations only
+
+  return {
+    format,
+    importAttributes,
+    shortCircuit: true,
+    url,
+  };
+}
+
+/**
  * Check if an error is a resolution error that we should handle
- * Handles ERR_MODULE_NOT_FOUND, ERR_UNSUPPORTED_DIR_IMPORT, ERR_INVALID_MODULE_SPECIFIER, and MODULE_NOT_FOUND (CommonJS)
+ * Handles ERR_MODULE_NOT_FOUND, ERR_UNSUPPORTED_DIR_IMPORT, ERR_INVALID_MODULE_SPECIFIER,
+ * ERR_PACKAGE_PATH_NOT_EXPORTED (for type-only packages), and MODULE_NOT_FOUND (CommonJS)
  */
 function isResolutionError(error: unknown): error is Error & { code: string } {
   return (
@@ -209,6 +202,7 @@ function isResolutionError(error: unknown): error is Error & { code: string } {
     (error.code === "ERR_MODULE_NOT_FOUND" ||
       error.code === "ERR_UNSUPPORTED_DIR_IMPORT" ||
       error.code === "ERR_INVALID_MODULE_SPECIFIER" ||
+      error.code === "ERR_PACKAGE_PATH_NOT_EXPORTED" || // Type-only packages
       error.code === "MODULE_NOT_FOUND") // CommonJS require() error
   );
 }
@@ -247,4 +241,37 @@ function normalizeFileUrl(
   }
 
   return { parent: parentURL, specifier };
+}
+
+/**
+ * Try to resolve type-only packages that only export TypeScript types
+ * Returns result if successful, throws if resolution fails
+ */
+async function tryResolveTypeOnlyPackage(
+  specifier: string,
+  context: Parameters<ResolveHook>[1],
+  nextResolve: Parameters<ResolveHook>[2],
+): Promise<Awaited<ReturnType<ResolveHook>>> {
+  const typesResult = await nextResolve(specifier, {
+    ...context,
+    conditions: [...(context.conditions ?? []), "types"],
+  });
+
+  // If resolved to .d.ts in node_modules, return empty data URL
+  // Node.js can't strip types from files in node_modules, but type-only imports
+  // don't need runtime code anyway
+  if (typesResult.url.endsWith(".d.ts") && typesResult.url.includes("/node_modules/")) {
+    return {
+      format: "module",
+      shortCircuit: true,
+      url: "data:text/javascript,",
+    };
+  }
+
+  return {
+    format: undefined,
+    importAttributes: typesResult.importAttributes,
+    shortCircuit: true,
+    url: typesResult.url,
+  };
 }

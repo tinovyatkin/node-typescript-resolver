@@ -17,6 +17,7 @@ const loaderPath = pathToFileURL(join(rootDir, "src", "index.ts")).href;
  */
 async function runFixture(
   fixturePath: string,
+  options?: { env?: Record<string, string> },
 ): Promise<{ exitCode: number; stderr: string; stdout: string }> {
   try {
     const { stderr, stdout } = await execFileAsync(
@@ -24,6 +25,7 @@ async function runFixture(
       ["--import", loaderPath, fixturePath],
       {
         cwd: rootDir,
+        env: { ...process.env, ...options?.env },
       },
     );
     return { exitCode: 0, stderr, stdout };
@@ -286,6 +288,23 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
       assert.ok(
         result.stdout.includes("SUCCESS: worker thread with two-level TypeScript imports"),
         `Expected worker thread to resolve TypeScript imports. Got: ${result.stdout}`,
+      );
+    });
+  });
+
+  describe("Type imports", () => {
+    it("should handle type-only imports from .d.ts files and type-only packages", async () => {
+      const fixturePath = join(testDir, "fixtures", "type-imports", "main.ts");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: type imports from both local .d.ts and type-fest package"),
+        `Expected type import to work correctly. Got: ${result.stdout}`,
       );
     });
   });
