@@ -4,16 +4,15 @@ import { type NapiResolveOptions, ResolverFactory } from "oxc-resolver";
 
 /**
  * Main resolver class that wraps oxc-resolver with TypeScript support
- * and manages multiple resolver instances with different conditions
  */
 export class TypeScriptResolver {
+  private readonly baseOptions: NapiResolveOptions;
   private readonly baseResolver: ResolverFactory;
   private readonly resolverCache = new Map<string, ResolverFactory>();
 
   constructor(options: { tsconfigPath?: string } = {}) {
     // Initialize base oxc-resolver with TypeScript-friendly settings
-    // Set default conditions that will be cloned for specific use cases
-    const resolverOptions: NapiResolveOptions = {
+    this.baseOptions = {
       conditionNames: ["node", "import"],
       extensionAlias: {
         ".cjs": [".cts", ".cjs"],
@@ -22,6 +21,7 @@ export class TypeScriptResolver {
       },
       extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json"],
       mainFields: ["module", "main"],
+      // Use tsconfig auto-detection for path aliases support
       tsconfig: options.tsconfigPath
         ? {
             configFile: options.tsconfigPath,
@@ -30,16 +30,19 @@ export class TypeScriptResolver {
         : "auto",
     };
 
-    // Create base resolver - we'll clone it with different conditions as needed
-    this.baseResolver = new ResolverFactory(resolverOptions);
+    // Create base resolver
+    this.baseResolver = new ResolverFactory(this.baseOptions);
   }
 
   /**
-   * Clear the resolution cache
+   * Clear the resolution cache for all resolver instances
    */
   clearCache(): void {
     this.baseResolver.clearCache();
-    // Cloned resolvers share the same cache, so clearing base clears all
+    // Clear all cached resolver instances
+    for (const resolver of this.resolverCache.values()) {
+      resolver.clearCache();
+    }
   }
 
   /**
@@ -58,11 +61,12 @@ export class TypeScriptResolver {
     // Get resolver with appropriate conditions
     const resolver = this.getResolverForConditions(conditions);
 
-    // Use oxc-resolver's async method for better performance and scalability
+    // Use oxc-resolver's async method for better performance
     try {
       const result = await resolver.async(parentDir, specifier);
 
-      if (result?.path) {
+      // oxc-resolver returns { path: string } on success or { error: string } on failure
+      if (result != null && "path" in result && result.path) {
         return result.path;
       }
     } catch {
@@ -73,7 +77,8 @@ export class TypeScriptResolver {
   }
 
   /**
-   * Get a resolver for specific conditions, using cloneWithOptions to share cache
+   * Get a resolver for specific conditions
+   * Creates new resolver instances instead of cloning to avoid oxc-resolver issues
    */
   private getResolverForConditions(conditions: readonly string[]): ResolverFactory {
     // If conditions match base resolver, return it directly
@@ -84,11 +89,13 @@ export class TypeScriptResolver {
 
     let resolver = this.resolverCache.get(cacheKey);
     if (!resolver) {
-      // Clone the base resolver with specific conditions
-      // This shares the cache with the base resolver
-      resolver = this.baseResolver.cloneWithOptions({
+      // Create a new resolver with updated conditions
+      // Don't use cloneWithOptions() as it seems to cause issues
+      const optionsWithConditions: NapiResolveOptions = {
+        ...this.baseOptions,
         conditionNames: [...conditions],
-      });
+      };
+      resolver = new ResolverFactory(optionsWithConditions);
       this.resolverCache.set(cacheKey, resolver);
     }
 
@@ -97,8 +104,8 @@ export class TypeScriptResolver {
 }
 
 /**
- * Create a resolver instance
+ * Factory function to create a TypeScript resolver instance
  */
-export function createResolver(options?: { tsconfigPath?: string }) {
+export function createResolver(options: { tsconfigPath?: string } = {}): TypeScriptResolver {
   return new TypeScriptResolver(options);
 }

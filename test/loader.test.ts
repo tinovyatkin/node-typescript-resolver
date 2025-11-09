@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
 import { pathToFileURL } from "node:url";
 
-import { resolve } from "../src/loader.ts";
+import { initialize, resolve } from "../src/loader.ts";
 
 /**
  * Mock nextResolve function that simulates Node.js failing to resolve a module
@@ -21,6 +21,9 @@ describe("Loader", () => {
   let parentURL: string;
 
   before(async () => {
+    // Initialize the loader (normally done by the initialize hook)
+    initialize();
+
     // Create a temporary test directory
     testDir = join(tmpdir(), `ts-loader-test-${Date.now()}`);
     await mkdir(testDir, { recursive: true });

@@ -27,6 +27,9 @@
  */
 
 import { register } from "node:module";
+import { argv, execArgv } from "node:process";
 
 // Register the loader with Node.js
-register("./loader.js", import.meta.url);
+// Use the same extension as the current file (works for both .ts and .js)
+const loaderPath = import.meta.url.replace(/index\.(ts|js)$/, "loader.$1");
+register(loaderPath, import.meta.url, { data: { argv, execArgv } });

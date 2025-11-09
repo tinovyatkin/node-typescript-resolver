@@ -6,7 +6,14 @@ import { createResolver } from "./resolver.ts";
 /**
  * Singleton resolver instance with caching
  */
-const resolver = createResolver();
+let resolver: null | ReturnType<typeof createResolver> = null;
+
+/**
+ * Initialize hook - called once when the loader is registered
+ */
+export function initialize(_data?: { argv?: string[]; execArgv?: string[] }) {
+  resolver ??= createResolver();
+}
 
 /**
  * Resolve hook for Node.js loader API
@@ -26,8 +33,8 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
     return await nextResolve(specifier, context);
   } catch (error) {
     // Only attempt custom resolution if default resolution failed
-    // with ERR_MODULE_NOT_FOUND
-    if (!isModuleNotFoundError(error)) {
+    // with ERR_MODULE_NOT_FOUND or ERR_UNSUPPORTED_DIR_IMPORT
+    if (!isResolutionError(error)) {
       throw error;
     }
 
@@ -49,6 +56,10 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
 
     // Try our custom resolver as a fallback
     try {
+      if (!resolver) {
+        throw error;
+      }
+
       // Pass context.conditions to the resolver so it uses the correct conditions
       const resolved = await resolver.resolve(specifier, parentURL, context.conditions);
 
@@ -86,8 +97,13 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
 };
 
 /**
- * Check if an error is a module not found error
+ * Check if an error is a resolution error that we should handle
+ * Handles both ERR_MODULE_NOT_FOUND and ERR_UNSUPPORTED_DIR_IMPORT
  */
-function isModuleNotFoundError(error: unknown): error is Error & { code: string } {
-  return error instanceof Error && "code" in error && error.code === "ERR_MODULE_NOT_FOUND";
+function isResolutionError(error: unknown): error is Error & { code: string } {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    (error.code === "ERR_MODULE_NOT_FOUND" || error.code === "ERR_UNSUPPORTED_DIR_IMPORT")
+  );
 }
