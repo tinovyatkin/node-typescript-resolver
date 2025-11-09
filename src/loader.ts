@@ -1,12 +1,20 @@
 import type { ResolveHook } from "node:module";
-import { pathToFileURL } from "node:url";
+import { basename, dirname } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { createResolver } from "./resolver.ts";
 
 /**
  * Singleton resolver instance with caching
  */
-const resolver = createResolver();
+let resolver: null | ReturnType<typeof createResolver> = null;
+
+/**
+ * Initialize hook - called once when the loader is registered
+ */
+export function initialize(_data?: { argv?: string[]; execArgv?: string[] }) {
+  resolver ??= createResolver();
+}
 
 /**
  * Resolve hook for Node.js loader API
@@ -26,18 +34,16 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
     return await nextResolve(specifier, context);
   } catch (error) {
     // Only attempt custom resolution if default resolution failed
-    // with ERR_MODULE_NOT_FOUND
-    if (!isModuleNotFoundError(error)) {
+    // with ERR_MODULE_NOT_FOUND or ERR_UNSUPPORTED_DIR_IMPORT
+    if (!isResolutionError(error)) {
       throw error;
     }
 
     // Get parent URL for custom resolution
+    // May be undefined for entry points - resolver will handle the fallback
     const parentURL = context.parentURL;
-    if (!parentURL) {
-      throw error;
-    }
 
-    // Skip built-in modules and URLs - they should have been handled by Node.js
+    // Skip built-in modules and remote URLs - they should have been handled by Node.js
     if (
       specifier.startsWith("node:") ||
       specifier.startsWith("http://") ||
@@ -47,10 +53,20 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
       throw error;
     }
 
+    // Normalize file:// URLs to extract bare specifiers and derive parent
+    const { parent: resolveParent, specifier: resolveSpecifier } = normalizeFileUrl(
+      specifier,
+      parentURL,
+    );
+
     // Try our custom resolver as a fallback
     try {
-      // Pass context.conditions to the resolver so it uses the correct conditions
-      const resolved = await resolver.resolve(specifier, parentURL, context.conditions);
+      if (!resolver) {
+        throw error;
+      }
+
+      // oxc-resolver handles file:// URLs for paths, but needs bare specifiers for aliases
+      const resolved = await resolver.resolve(resolveSpecifier, resolveParent, context.conditions);
 
       if (resolved) {
         // Convert to URL
@@ -86,8 +102,51 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
 };
 
 /**
- * Check if an error is a module not found error
+ * Check if an error is a resolution error that we should handle
+ * Handles ERR_MODULE_NOT_FOUND, ERR_UNSUPPORTED_DIR_IMPORT, and ERR_INVALID_MODULE_SPECIFIER
  */
-function isModuleNotFoundError(error: unknown): error is Error & { code: string } {
-  return error instanceof Error && "code" in error && error.code === "ERR_MODULE_NOT_FOUND";
+function isResolutionError(error: unknown): error is Error & { code: string } {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    (error.code === "ERR_MODULE_NOT_FOUND" ||
+      error.code === "ERR_UNSUPPORTED_DIR_IMPORT" ||
+      error.code === "ERR_INVALID_MODULE_SPECIFIER")
+  );
+}
+
+/**
+ * Extract bare specifier and parent from file:// URL when needed
+ * For entry points, Node.js converts bare specifiers to file:// URLs
+ */
+function normalizeFileUrl(
+  specifier: string,
+  parentURL: string | undefined,
+): { parent: string | undefined; specifier: string } {
+  if (!specifier.startsWith("file://")) {
+    return { parent: parentURL, specifier };
+  }
+
+  // If we have a parent and specifier is under it, extract relative path
+  if (parentURL?.startsWith("file://") && specifier.startsWith(parentURL)) {
+    return {
+      parent: parentURL,
+      specifier: specifier.slice(parentURL.length),
+    };
+  }
+
+  // No parent - extract filename and derive parent from specifier's directory
+  if (!parentURL) {
+    const filePath = fileURLToPath(specifier);
+    const filename = basename(filePath);
+    if (filename) {
+      const parentHref = pathToFileURL(dirname(filePath)).href;
+      return {
+        parent: parentHref.endsWith("/") ? parentHref : `${parentHref}/`,
+        specifier: filename,
+      };
+    }
+  }
+
+  return { parent: parentURL, specifier };
 }
