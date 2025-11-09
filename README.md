@@ -11,6 +11,7 @@ This package provides a fast and efficient TypeScript module resolver for Node.j
 - 📁 **Directory imports** (import './dir' resolves to './dir/index.ts')
 - 🎯 **tsconfig.json path aliases** (e.g., '@lib/\*', '@utils')
 - 🔄 **import.meta.resolve support** (synchronous resolution for TypeScript files)
+- 📦 **CommonJS require() support** (require TypeScript files with extensionless imports)
 - ⚡ **Efficient caching** for fast repeated resolutions
 - 🔧 **Built on [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)** for blazing-fast resolution
 
@@ -98,6 +99,31 @@ This is powered by the **synchronous resolve hook** (`resolveSync`), which Node.
 - Directory imports to index files
 - tsconfig.json path aliases
 
+## CommonJS require() Support
+
+The synchronous resolve hook also enables CommonJS `require()` to work seamlessly with TypeScript files:
+
+```javascript
+// main.cjs
+// Require extensionless TypeScript module
+const helper = require("./helper"); // Resolves to ./helper.ts
+
+// Require with explicit .ts extension
+const module = require("./module.ts");
+
+// Require path aliases from tsconfig.json
+const utils = require("@lib/utils");
+```
+
+This means you can:
+
+- Mix CommonJS and ESM modules in the same project
+- Gradually migrate from CommonJS to ESM
+- Use TypeScript files in legacy CommonJS codebases
+- Leverage path aliases in both module systems
+
+**Note:** While Node.js's built-in TypeScript support works with CommonJS files (`.cjs`), the TypeScript files themselves should use ESM syntax (`export`/`import`). The loader enables CommonJS code to `require()` those TypeScript ESM modules.
+
 ## How It Works
 
 ### Non-Intrusive Resolution
@@ -117,7 +143,7 @@ This loader is designed to be **non-intrusive** and provides both **async** and 
 
 3. **Dual resolution modes**
    - **Async hook** (`resolve`) - Used for dynamic imports and regular import statements
-   - **Sync hook** (`resolveSync`) - Used by `import.meta.resolve()` for synchronous resolution
+   - **Sync hook** (`resolveSync`) - Used by `import.meta.resolve()` and CommonJS `require()` for synchronous resolution
    - Both hooks share the same resolution logic and capabilities
 
 4. **Efficient caching**
