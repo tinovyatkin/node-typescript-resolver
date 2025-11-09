@@ -272,4 +272,21 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
       );
     });
   });
+
+  describe("Worker Threads", () => {
+    it("should resolve TypeScript imports inside worker threads", async () => {
+      const fixturePath = join(testDir, "fixtures", "worker-threads", "main.ts");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: worker thread with two-level TypeScript imports"),
+        `Expected worker thread to resolve TypeScript imports. Got: ${result.stdout}`,
+      );
+    });
+  });
 });

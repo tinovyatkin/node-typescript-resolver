@@ -22,7 +22,7 @@
   "scripts": {
     "build": "tsc",
     "test": "node --test",
-    "test:ci": "node --test --experimental-test-coverage --test-reporter spec --test-reporter-destination stdout --test-reporter node-test-github-reporter --test-reporter-destination stdout --test-reporter lcov --test-reporter-destination lcov.info",
+    "test:ci": "node --test --experimental-test-coverage --test-reporter spec --test-reporter-destination stdout --test-reporter node-test-github-reporter --test-reporter-destination stdout --test-reporter lcov --test-reporter-destination lcov.info --test-reporter junit --test-reporter-destination junit.xml",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -47,7 +47,7 @@
   },
   "homepage": "https://github.com/tinovyatkin/node-typescript-resolver#readme",
   "engines": {
-    "node": ">=22.7.0"
+    "node": ">=22.15.0"
   },
   "dependencies": {
     "oxc-resolver": "^11.13.1"
