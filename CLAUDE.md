@@ -24,7 +24,7 @@ npm test
 node --test --test-reporter=dot
 
 # Test a single file with TypeScript support
-node --test test/resolver.test.ts
+node --test tests/resolver.test.ts
 ```
 
 ## Architecture
@@ -111,10 +111,10 @@ Tests use Node.js native test runner (`node:test`):
 
 Test organization:
 
-- `test/resolver.test.ts`: Unit tests for the resolver class
-- `test/loader.test.ts`: Unit tests for the loader hook
-- `test/integration.test.ts`: Integration tests that spawn real Node.js processes
-- `test/fixtures/`: Test fixtures for integration tests
+- `tests/resolver.test.ts`: Unit tests for the resolver class
+- `tests/loader.test.ts`: Unit tests for the loader hook
+- `tests/integration.test.ts`: Integration tests that spawn real Node.js processes
+- `tests/fixtures/`: Test fixtures for integration tests
 
 **Running tests:**
 
