@@ -27,7 +27,7 @@ npm install node-typescript-resolver
 Use the loader alongside Node.js's built-in TypeScript support to enable TypeScript-aware module resolution:
 
 ```bash
-# Node.js 22.7.0+ with built-in TypeScript support (type stripping)
+# Node.js 22.15.0+ with built-in TypeScript support (type stripping)
 node --import node-typescript-resolver your-app.ts
 
 # Or with --experimental-transform-types for type transformations
@@ -93,7 +93,7 @@ const utilsPath = import.meta.resolve("@lib/utils");
 const module = await import(helperPath);
 ```
 
-This is powered by the **synchronous resolve hook** (`resolveSync`), which Node.js uses internally when calling `import.meta.resolve()`. Both the async and sync hooks provide the same resolution capabilities:
+This is powered by the **synchronous resolve hook** (`resolveSync`), which Node.js uses internally when calling `import.meta.resolve()`. The sync hook was enabled by `module.registerHooks()` API added in Node.js 22.15.0. Both the async and sync hooks provide the same resolution capabilities:
 
 - TypeScript file extensions (.ts, .tsx, .mts, .cts)
 - Extensionless imports
@@ -185,7 +185,7 @@ This package is designed for high performance:
 
 This package is built for reliability and production use:
 
-- **Stable Node.js APIs** - Uses Node.js's official [customization hooks](https://nodejs.org/docs/latest-v22.x/api/module.html#customization-hooks) API (stable since Node.js 22.7.0)
+- **Stable Node.js APIs** - Uses Node.js's official [customization hooks](https://nodejs.org/docs/latest-v22.x/api/module.html#customization-hooks) API (stable since Node.js 22.7.0) with sync hooks via `module.registerHooks()` (added in Node.js 22.15.0)
 - **Battle-tested resolver** - Powered by [oxc-resolver](https://www.npmjs.com/package/oxc-resolver), a Rust-based resolver used in production by the Oxc project
 - **Comprehensive test coverage** - Extensively tested with 33 integration tests covering real-world scenarios:
   - ESM and CommonJS interoperability
@@ -195,7 +195,7 @@ This package is built for reliability and production use:
 
 ## Requirements
 
-- Node.js >= 22.7.0 (with built-in TypeScript support)
+- Node.js >= 22.15.0 (with built-in TypeScript support and `module.registerHooks()` for sync resolution)
 - Works with Node.js's built-in type stripping or `--experimental-transform-types` flag (this package only handles import resolution, not code transformation)
 
 ## Development
@@ -210,7 +210,7 @@ npm run build
 # Run tests
 npm test
 
-# Run tests with TypeScript directly (Node.js 22.7.0+)
+# Run tests with TypeScript directly (Node.js 22.15.0+)
 npm run test:ts
 ```
 

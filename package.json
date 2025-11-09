@@ -47,7 +47,7 @@
   },
   "homepage": "https://github.com/tinovyatkin/node-typescript-resolver#readme",
   "engines": {
-    "node": ">=22.7.0"
+    "node": ">=22.15.0"
   },
   "dependencies": {
     "oxc-resolver": "^11.13.1"
