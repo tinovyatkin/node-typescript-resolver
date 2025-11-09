@@ -21,10 +21,9 @@ async function runFixture(
   try {
     const { stderr, stdout } = await execFileAsync(
       process.execPath,
-      ["--no-warnings", "--experimental-strip-types", "--import", loaderPath, fixturePath],
+      ["--import", loaderPath, fixturePath],
       {
         cwd: rootDir,
-        env: { ...process.env, NODE_NO_WARNINGS: "1" },
       },
     );
     return { exitCode: 0, stderr, stdout };
@@ -151,10 +150,9 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
       try {
         const { stdout } = await execFileAsync(
           process.execPath,
-          ["--no-warnings", "--experimental-strip-types", "--import", loaderPath, fixturePath],
+          ["--import", loaderPath, fixturePath],
           {
             cwd: fixtureDir,
-            env: { ...process.env, NODE_NO_WARNINGS: "1" },
           },
         );
 
