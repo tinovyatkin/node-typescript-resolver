@@ -12,6 +12,7 @@ This package provides a fast and efficient TypeScript module resolver for Node.j
 - 🎯 **tsconfig.json path aliases** (e.g., '@lib/\*', '@utils')
 - 🔄 **import.meta.resolve support** (synchronous resolution for TypeScript files)
 - 📦 **CommonJS require() support** (require TypeScript files with extensionless imports)
+- 🧵 **Worker threads support** (extensionless imports inside worker threads)
 - ⚡ **Efficient caching** for fast repeated resolutions
 - 🔧 **Built on [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)** for blazing-fast resolution
 
@@ -123,6 +124,20 @@ This means you can:
 - Leverage path aliases in both module systems
 
 **Note:** While Node.js's built-in TypeScript support works with CommonJS files (`.cjs`), the TypeScript files themselves should use ESM syntax (`export`/`import`). The loader enables CommonJS code to `require()` those TypeScript ESM modules.
+
+## Worker Threads Support
+
+Worker threads work with TypeScript files. The Worker constructor requires the `.ts` extension for the worker file itself, but imports **inside** the worker support extensionless resolution:
+
+```javascript
+// Worker file must have .ts extension
+const worker = new Worker(new URL("./worker.ts", import.meta.url), {
+  execArgv: process.execArgv, // Pass loader to worker
+});
+
+// Inside worker.ts - extensionless imports work
+import { helper } from "./helper"; // Resolves to ./helper.ts
+```
 
 ## How It Works
 
