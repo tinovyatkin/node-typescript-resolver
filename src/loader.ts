@@ -1,4 +1,5 @@
 import type { ResolveHook } from "node:module";
+import { basename, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { createResolver } from "./resolver.ts";
@@ -136,13 +137,12 @@ function normalizeFileUrl(
 
   // No parent - extract filename and derive parent from specifier's directory
   if (!parentURL) {
-    const urlPath = fileURLToPath(specifier);
-    const segments = urlPath.split("/");
-    const filename = segments.at(-1);
+    const filePath = fileURLToPath(specifier);
+    const filename = basename(filePath);
     if (filename) {
-      const dir = segments.slice(0, -1).join("/");
+      const parentHref = pathToFileURL(dirname(filePath)).href;
       return {
-        parent: `file://${dir}/`,
+        parent: parentHref.endsWith("/") ? parentHref : `${parentHref}/`,
         specifier: filename,
       };
     }
