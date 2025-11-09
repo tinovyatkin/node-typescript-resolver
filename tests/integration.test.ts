@@ -204,4 +204,33 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
       );
     });
   });
+
+  describe("CommonJS require", () => {
+    it("should resolve TypeScript files via require() (sync hook)", async () => {
+      const fixturePath = join(testDir, "fixtures", "commonjs-require", "main.cjs");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Required extensionless .ts module"),
+        `Expected to require extensionless .ts module. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Successfully accessed exported values"),
+        `Expected to access exported values. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Required .ts module with extension"),
+        `Expected to require .ts module with extension. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: CommonJS require() with TypeScript files"),
+        `Expected success message. Got: ${result.stdout}`,
+      );
+    });
+  });
 });

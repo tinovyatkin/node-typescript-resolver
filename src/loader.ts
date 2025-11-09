@@ -192,7 +192,7 @@ export const resolveSync: ResolveHookSync = (specifier, context, nextResolve) =>
 
 /**
  * Check if an error is a resolution error that we should handle
- * Handles ERR_MODULE_NOT_FOUND, ERR_UNSUPPORTED_DIR_IMPORT, and ERR_INVALID_MODULE_SPECIFIER
+ * Handles ERR_MODULE_NOT_FOUND, ERR_UNSUPPORTED_DIR_IMPORT, ERR_INVALID_MODULE_SPECIFIER, and MODULE_NOT_FOUND (CommonJS)
  */
 function isResolutionError(error: unknown): error is Error & { code: string } {
   return (
@@ -200,7 +200,8 @@ function isResolutionError(error: unknown): error is Error & { code: string } {
     "code" in error &&
     (error.code === "ERR_MODULE_NOT_FOUND" ||
       error.code === "ERR_UNSUPPORTED_DIR_IMPORT" ||
-      error.code === "ERR_INVALID_MODULE_SPECIFIER")
+      error.code === "ERR_INVALID_MODULE_SPECIFIER" ||
+      error.code === "MODULE_NOT_FOUND") // CommonJS require() error
   );
 }
 
