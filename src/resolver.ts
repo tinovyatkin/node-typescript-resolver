@@ -53,25 +53,7 @@ export class TypeScriptResolver {
     parent: string | undefined,
     conditions: readonly string[] = ["node", "import"],
   ): Promise<null | string> {
-    // Convert parent URL to path if needed, fallback to cwd if undefined
-    let parentPath: string;
-    if (parent === undefined) {
-      parentPath = process.cwd();
-    } else {
-      parentPath = parent.startsWith("file://") ? fileURLToPath(parent) : parent;
-    }
-
-    let parentDir: string;
-    if (parent === undefined) {
-      // Entry point - use cwd directly
-      parentDir = parentPath;
-    } else if (parentPath.endsWith(sep) || parentPath.endsWith("/")) {
-      // Already a directory - use as-is
-      parentDir = parentPath;
-    } else {
-      // File path - get containing directory
-      parentDir = dirname(parentPath);
-    }
+    const parentDir = this.getParentDirectory(parent);
 
     // Get resolver with appropriate conditions
     const resolver = this.getResolverForConditions(conditions);
@@ -99,6 +81,30 @@ export class TypeScriptResolver {
     parent: string | undefined,
     conditions: readonly string[] = ["node", "import"],
   ): null | string {
+    const parentDir = this.getParentDirectory(parent);
+
+    // Get resolver with appropriate conditions
+    const resolver = this.getResolverForConditions(conditions);
+
+    // Use oxc-resolver's sync method
+    try {
+      const result = resolver.sync(parentDir, specifier);
+
+      // oxc-resolver returns { path: string } on success or { error: string } on failure
+      if (result != null && "path" in result && result.path) {
+        return result.path;
+      }
+    } catch {
+      // Resolution failed
+    }
+
+    return null;
+  }
+
+  /**
+   * Convert parent to directory path for resolution
+   */
+  private getParentDirectory(parent: string | undefined): string {
     // Convert parent URL to path if needed, fallback to cwd if undefined
     let parentPath: string;
     if (parent === undefined) {
@@ -119,22 +125,7 @@ export class TypeScriptResolver {
       parentDir = dirname(parentPath);
     }
 
-    // Get resolver with appropriate conditions
-    const resolver = this.getResolverForConditions(conditions);
-
-    // Use oxc-resolver's sync method
-    try {
-      const result = resolver.sync(parentDir, specifier);
-
-      // oxc-resolver returns { path: string } on success or { error: string } on failure
-      if (result != null && "path" in result && result.path) {
-        return result.path;
-      }
-    } catch {
-      // Resolution failed
-    }
-
-    return null;
+    return parentDir;
   }
 
   /**
