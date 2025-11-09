@@ -226,6 +226,14 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
         `Expected to require .ts module with extension. Got: ${result.stdout}`,
       );
       assert.ok(
+        result.stdout.includes("✓ Dynamically imported .mts module from CommonJS"),
+        `Expected to dynamically import .mts module. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Successfully accessed exported values from .mts module"),
+        `Expected to access exported values from .mts module. Got: ${result.stdout}`,
+      );
+      assert.ok(
         result.stdout.includes("SUCCESS: CommonJS require() with TypeScript files"),
         `Expected success message. Got: ${result.stdout}`,
       );
