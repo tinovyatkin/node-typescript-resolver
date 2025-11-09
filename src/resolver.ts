@@ -19,7 +19,7 @@ export class TypeScriptResolver {
         ".js": [".ts", ".tsx", ".js"],
         ".mjs": [".mts", ".mjs"],
       },
-      extensions: [".ts", ".tsx", ".mts", ".cts", ".d.ts", ".js", ".jsx", ".mjs", ".cjs", ".json"],
+      extensions: [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".json", ".d.ts"],
       mainFields: ["module", "main"],
       // Use tsconfig auto-detection for path aliases support
       tsconfig: options.tsconfigPath
