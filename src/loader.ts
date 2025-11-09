@@ -82,6 +82,10 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
         } else if (resolved.endsWith(".wasm")) {
           format = "wasm";
           importAttributes = { type: "wasm" };
+        } else if (resolved.endsWith(".mts")) {
+          format = "module-typescript";
+        } else if (resolved.endsWith(".cts")) {
+          format = "commonjs-typescript";
         }
 
         return {
@@ -171,6 +175,10 @@ export const resolveSync: ResolveHookSync = (specifier, context, nextResolve) =>
         } else if (resolved.endsWith(".wasm")) {
           format = "wasm";
           importAttributes = { type: "wasm" };
+        } else if (resolved.endsWith(".mts")) {
+          format = "module-typescript";
+        } else if (resolved.endsWith(".cts")) {
+          format = "commonjs-typescript";
         }
 
         return {
