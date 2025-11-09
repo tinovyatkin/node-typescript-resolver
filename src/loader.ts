@@ -98,12 +98,14 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
 
 /**
  * Check if an error is a resolution error that we should handle
- * Handles both ERR_MODULE_NOT_FOUND and ERR_UNSUPPORTED_DIR_IMPORT
+ * Handles ERR_MODULE_NOT_FOUND, ERR_UNSUPPORTED_DIR_IMPORT, and ERR_INVALID_MODULE_SPECIFIER
  */
 function isResolutionError(error: unknown): error is Error & { code: string } {
   return (
     error instanceof Error &&
     "code" in error &&
-    (error.code === "ERR_MODULE_NOT_FOUND" || error.code === "ERR_UNSUPPORTED_DIR_IMPORT")
+    (error.code === "ERR_MODULE_NOT_FOUND" ||
+      error.code === "ERR_UNSUPPORTED_DIR_IMPORT" ||
+      error.code === "ERR_INVALID_MODULE_SPECIFIER")
   );
 }

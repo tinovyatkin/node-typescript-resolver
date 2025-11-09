@@ -109,4 +109,21 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
       );
     });
   });
+
+  describe("path aliases", () => {
+    it("should resolve tsconfig.json path aliases", async () => {
+      const fixturePath = join(testDir, "fixtures", "path-aliases", "main.ts");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: path aliases resolution"),
+        `Expected path aliases to resolve correctly. Got: ${result.stdout}`,
+      );
+    });
+  });
 });

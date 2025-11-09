@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "baseUrl": ".",
+    "paths": {
+      "@lib/*": ["lib/*"],
+      "@utils": ["utils/index.ts"]
+    }
+  }
+}
