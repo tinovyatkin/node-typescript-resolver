@@ -21,8 +21,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "node --test --experimental-strip-types 'test/**/*.test.ts'",
-    "test:ci": "node --test --experimental-strip-types --test-reporter spec --test-reporter-destination stdout --test-reporter node-test-github-reporter --test-reporter-destination stdout 'test/**/*.test.ts'",
+    "test": "node --test",
+    "test:ci": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter node-test-github-reporter --test-reporter-destination stdout",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

@@ -44,7 +44,7 @@ export default defineConfig([
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ["test/*.ts"],
+          allowDefaultProject: ["tests/*.ts"],
         },
         tsconfigRootDir: import.meta.dirname,
       },
@@ -143,7 +143,7 @@ export default defineConfig([
   stylistic.configs.recommended,
   prettierConfig,
   {
-    files: ["**/src/test/**"],
+    files: ["**/tests/**"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/require-await": "off",
@@ -154,6 +154,6 @@ export default defineConfig([
     },
   },
   {
-    ignores: ["out", "dist", "node_modules", ".vscode-test", "**/vscode.d.ts", "test/fixtures/**"],
+    ignores: ["out", "dist", "node_modules", "tests/fixtures/**"],
   },
 ]);
