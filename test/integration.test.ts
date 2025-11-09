@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { execFile } from "node:child_process";
+import { execFile, type ExecFileException } from "node:child_process";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -29,11 +29,17 @@ async function runFixture(
       },
     );
     return { exitCode: 0, stderr, stdout };
-  } catch (error: any) {
+  } catch (error) {
+    const execError = error as ExecFileException & {
+      stderr?: Buffer | string;
+      stdout?: Buffer | string;
+    };
+    const exitCode = typeof execError.code === "number" ? execError.code : 1;
+
     return {
-      exitCode: error.code || 1,
-      stderr: error.stderr || "",
-      stdout: error.stdout || "",
+      exitCode,
+      stderr: execError.stderr?.toString() ?? "",
+      stdout: execError.stdout?.toString() ?? "",
     };
   }
 }
