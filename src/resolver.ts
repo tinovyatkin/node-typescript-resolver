@@ -1,4 +1,4 @@
-import { dirname } from "node:path";
+import { dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type NapiResolveOptions, ResolverFactory } from "oxc-resolver";
 
@@ -61,9 +61,17 @@ export class TypeScriptResolver {
       parentPath = parent.startsWith("file://") ? fileURLToPath(parent) : parent;
     }
 
-    // If parent is a directory (ends with /), use it directly
-    // Otherwise, get the directory containing the parent file
-    const parentDir = parentPath.endsWith("/") ? parentPath : dirname(parentPath);
+    let parentDir: string;
+    if (parent === undefined) {
+      // Entry point - use cwd directly
+      parentDir = parentPath;
+    } else if (parentPath.endsWith(sep) || parentPath.endsWith("/")) {
+      // Already a directory - use as-is
+      parentDir = parentPath;
+    } else {
+      // File path - get containing directory
+      parentDir = dirname(parentPath);
+    }
 
     // Get resolver with appropriate conditions
     const resolver = this.getResolverForConditions(conditions);
