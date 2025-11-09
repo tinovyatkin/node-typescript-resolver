@@ -13,6 +13,7 @@ This package provides a fast and efficient TypeScript module resolver for Node.j
 - 🔄 **import.meta.resolve support** (synchronous resolution for TypeScript files)
 - 📦 **CommonJS require() support** (require TypeScript files with extensionless imports)
 - 🧵 **Worker threads support** (extensionless imports inside worker threads)
+- 🎨 **Type-only imports** (import { type Foo } from 'type-only-packages')
 - ⚡ **Efficient caching** for fast repeated resolutions
 - 🔧 **Built on [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)** for blazing-fast resolution
 
@@ -45,6 +46,9 @@ import { Button } from "./components";
 
 // Import with TypeScript path alias (from tsconfig.json)
 import { utils } from "@lib/utils";
+
+// Type-only imports from type-only packages
+import { type Writable } from "type-fest";
 
 // Standard imports still work
 import { something } from "./module.ts";
@@ -139,6 +143,23 @@ const worker = new Worker(new URL("./worker.ts", import.meta.url), {
 import { helper } from "./helper"; // Resolves to ./helper.ts
 ```
 
+## Type-Only Imports
+
+The loader supports type-only imports from packages that only export TypeScript types (like `type-fest`):
+
+```typescript
+import { type Writable } from "type-fest";
+import { type JsonValue } from "type-fest";
+```
+
+**Node.js Limitation Workaround:** Node.js currently doesn't support loading `.d.ts` files from `node_modules` when using built-in TypeScript support. The loader works around this by:
+
+1. Detecting when a package resolves to a `.d.ts` file in `node_modules`
+2. Using the `"types"` export condition to find the correct type definitions
+3. Returning an empty module for runtime (since type-only imports don't need runtime code)
+
+This allows you to use TypeScript's `import { type }` syntax with type-only packages without any runtime errors.
+
 ## How It Works
 
 ### Non-Intrusive Resolution
@@ -147,7 +168,7 @@ This loader is designed to be **non-intrusive** and provides both **async** and 
 
 1. **Always tries default Node.js resolution first**
    - Lets Node.js handle all normal module resolution
-   - Only activates when Node.js fails with `ERR_MODULE_NOT_FOUND`
+   - Only activates when Node.js fails with `ERR_MODULE_NOT_FOUND`, `ERR_PACKAGE_PATH_NOT_EXPORTED`, or other resolution errors
    - Works for both dynamic imports and `import.meta.resolve()`
 
 2. **Fallback resolution** - When default resolution fails, the loader tries:
@@ -187,9 +208,10 @@ This package is built for reliability and production use:
 
 - **Stable Node.js APIs** - Uses Node.js's official [customization hooks](https://nodejs.org/docs/latest-v22.x/api/module.html#customization-hooks) API (stable since Node.js 22.7.0) with sync hooks via `module.registerHooks()` (added in Node.js 22.15.0)
 - **Battle-tested resolver** - Powered by [oxc-resolver](https://www.npmjs.com/package/oxc-resolver), a Rust-based resolver used in production by the Oxc project
-- **Comprehensive test coverage** - Extensively tested with 33 integration tests covering real-world scenarios:
+- **Comprehensive test coverage** - Extensively tested with 35 integration tests covering real-world scenarios:
   - ESM and CommonJS interoperability
   - Path aliases and extensionless imports
+  - Type-only imports from packages like `type-fest`
   - `import.meta.resolve()` and `createRequire()` support
   - Directory imports and edge cases
 
