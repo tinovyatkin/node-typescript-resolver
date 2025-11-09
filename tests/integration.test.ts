@@ -231,4 +231,37 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
       );
     });
   });
+
+  describe("ESM createRequire", () => {
+    it("should resolve .cts files via createRequire() (sync hook)", async () => {
+      const fixturePath = join(testDir, "fixtures", "esm-create-require", "main.ts");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Required extensionless .cts module via createRequire"),
+        `Expected to require extensionless .cts module. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Successfully accessed exported values from .cts"),
+        `Expected to access exported values from .cts. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Required .cts module with extension via createRequire"),
+        `Expected to require .cts module with extension. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Successfully called function from required .cts module"),
+        `Expected to call function from .cts module. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: ESM createRequire() with CommonJS TypeScript files"),
+        `Expected success message. Got: ${result.stdout}`,
+      );
+    });
+  });
 });
