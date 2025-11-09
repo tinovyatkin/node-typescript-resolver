@@ -26,10 +26,18 @@
  * ```
  */
 
-import { register } from "node:module";
+import { register, registerHooks } from "node:module";
 import { argv, execArgv } from "node:process";
 
-// Register the loader with Node.js
+// Import the synchronous resolve hook for import.meta.resolve support
+import { resolveSync } from "./loader.ts";
+
+// Register synchronous hooks (for import.meta.resolve and require support)
+// Note: We still need to initialize the resolver, which will happen via register() below
+registerHooks({ resolve: resolveSync });
+
+// Register asynchronous loader (for dynamic imports)
+// The initialize hook will be called automatically by Node.js
 // Use the same extension as the current file (works for both .ts and .js)
 const loaderPath = import.meta.url.replace(/index\.(ts|js)$/, "loader.$1");
 register(loaderPath, import.meta.url, { data: { argv, execArgv } });
