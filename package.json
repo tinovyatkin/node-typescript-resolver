@@ -1,6 +1,6 @@
 {
   "name": "node-typescript-resolver",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Companion loader for Node.js's built-in TypeScript support that adds TypeScript-aware import resolution",
   "main": "./dist/index.js",
   "type": "module",
