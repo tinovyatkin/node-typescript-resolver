@@ -52,7 +52,7 @@ jobs:
           use_oidc: true
 
       - name: Upload test results to Codecov
-        if: matrix.os == 'ubuntu-latest'
+        if: always() && matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v5
         with:
           files: ./junit.xml
