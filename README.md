@@ -1,4 +1,4 @@
-# node-typescript-resolver
+# node-typescript-resolver [![codecov](https://codecov.io/gh/tinovyatkin/node-typescript-resolver/graph/badge.svg?token=h66FWU5vjB)](https://codecov.io/gh/tinovyatkin/node-typescript-resolver)
 
 **A companion loader for Node.js's built-in TypeScript support** that adds TypeScript-aware import resolution.
 
