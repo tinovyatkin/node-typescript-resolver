@@ -166,6 +166,18 @@ This package is designed for high performance:
 - Built-in caching from oxc-resolver to avoid repeated filesystem lookups
 - Minimal overhead in the resolution path
 
+## Production Ready
+
+This package is built for reliability and production use:
+
+- **Stable Node.js APIs** - Uses Node.js's official [customization hooks](https://nodejs.org/docs/latest-v22.x/api/module.html#customization-hooks) API (stable since Node.js 22.7.0)
+- **Battle-tested resolver** - Powered by [oxc-resolver](https://www.npmjs.com/package/oxc-resolver), a Rust-based resolver used in production by the Oxc project
+- **Comprehensive test coverage** - Extensively tested with 33 integration tests covering real-world scenarios:
+  - ESM and CommonJS interoperability
+  - Path aliases and extensionless imports
+  - `import.meta.resolve()` and `createRequire()` support
+  - Directory imports and edge cases
+
 ## Requirements
 
 - Node.js >= 22.7.0 (with built-in TypeScript support)
