@@ -151,6 +151,8 @@ export default defineConfig([
       "@typescript-eslint/strict-boolean-expressions": "off",
       "@typescript-eslint/no-empty-function": "off",
       "no-restricted-syntax": "off",
+      "sonarjs/no-nested-functions": "off",
+      "sonarjs/no-identical-functions": "off",
     },
   },
   {

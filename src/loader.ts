@@ -1,4 +1,4 @@
-import type { ResolveHook } from "node:module";
+import type { ResolveHook, ResolveHookSync } from "node:module";
 import { basename, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -67,6 +67,95 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
 
       // oxc-resolver handles file:// URLs for paths, but needs bare specifiers for aliases
       const resolved = await resolver.resolve(resolveSpecifier, resolveParent, context.conditions);
+
+      if (resolved) {
+        // Convert to URL
+        const url = pathToFileURL(resolved).href;
+
+        // Determine format and import attributes based on extension
+        let format: string | undefined;
+        let importAttributes: Record<string, string> | undefined;
+
+        if (resolved.endsWith(".json")) {
+          format = "json";
+          importAttributes = { type: "json" };
+        } else if (resolved.endsWith(".wasm")) {
+          format = "wasm";
+          importAttributes = { type: "wasm" };
+        }
+
+        return {
+          format,
+          importAttributes,
+          shortCircuit: true,
+          url,
+        };
+      }
+    } catch {
+      // Custom resolver also failed, throw original error
+      throw error;
+    }
+
+    // Custom resolver returned null, throw original error
+    throw error;
+  }
+};
+
+/**
+ * Synchronous resolve hook for Node.js loader API
+ *
+ * This hook provides synchronous module resolution to support:
+ * - TypeScript file extensions (.ts, .tsx)
+ * - Extensionless imports
+ * - tsconfig.json path aliases
+ *
+ * Following the same approach as the async version:
+ * - First tries default Node.js resolution
+ * - Only kicks in when Node.js fails to resolve
+ */
+export const resolveSync: ResolveHookSync = (specifier, context, nextResolve) => {
+  // Always try default Node.js resolution first
+  try {
+    return nextResolve(specifier, context);
+  } catch (error) {
+    // Only attempt custom resolution if default resolution failed
+    // with ERR_MODULE_NOT_FOUND or ERR_UNSUPPORTED_DIR_IMPORT
+    if (!isResolutionError(error)) {
+      throw error;
+    }
+
+    // Get parent URL for custom resolution
+    // May be undefined for entry points - resolver will handle the fallback
+    const parentURL = context.parentURL;
+
+    // Skip built-in modules and remote URLs - they should have been handled by Node.js
+    if (
+      specifier.startsWith("node:") ||
+      specifier.startsWith("http://") ||
+      specifier.startsWith("https://") ||
+      specifier.startsWith("data:")
+    ) {
+      throw error;
+    }
+
+    // Normalize file:// URLs to extract bare specifiers and derive parent
+    const { parent: resolveParent, specifier: resolveSpecifier } = normalizeFileUrl(
+      specifier,
+      parentURL,
+    );
+
+    // Try our custom resolver as a fallback
+    try {
+      if (!resolver) {
+        throw error;
+      }
+
+      // oxc-resolver handles file:// URLs for paths, but needs bare specifiers for aliases
+      const resolved: null | string = resolver.resolveSync(
+        resolveSpecifier,
+        resolveParent,
+        context.conditions,
+      );
 
       if (resolved) {
         // Convert to URL

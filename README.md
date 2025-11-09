@@ -10,6 +10,7 @@ This package provides a fast and efficient TypeScript module resolver for Node.j
 - 🚀 **Extensionless imports** (import './module' resolves to './module.ts')
 - 📁 **Directory imports** (import './dir' resolves to './dir/index.ts')
 - 🎯 **tsconfig.json path aliases** (e.g., '@lib/\*', '@utils')
+- 🔄 **import.meta.resolve support** (synchronous resolution for TypeScript files)
 - ⚡ **Efficient caching** for fast repeated resolutions
 - 🔧 **Built on [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)** for blazing-fast resolution
 
@@ -72,15 +73,41 @@ import { helper } from "@lib/helpers";
 import { format } from "@utils";
 ```
 
+## import.meta.resolve Support
+
+The loader provides both **asynchronous** and **synchronous** resolve hooks, enabling full support for `import.meta.resolve()` with TypeScript files:
+
+```typescript
+// Resolve extensionless TypeScript imports
+const helperPath = import.meta.resolve("./helper"); // Resolves to ./helper.ts
+
+// Resolve with explicit .ts extension
+const modulePath = import.meta.resolve("./module.ts");
+
+// Resolve path aliases from tsconfig.json
+const utilsPath = import.meta.resolve("@lib/utils");
+
+// Use the resolved path
+const module = await import(helperPath);
+```
+
+This is powered by the **synchronous resolve hook** (`resolveSync`), which Node.js uses internally when calling `import.meta.resolve()`. Both the async and sync hooks provide the same resolution capabilities:
+
+- TypeScript file extensions (.ts, .tsx, .mts, .cts)
+- Extensionless imports
+- Directory imports to index files
+- tsconfig.json path aliases
+
 ## How It Works
 
 ### Non-Intrusive Resolution
 
-This loader is designed to be **non-intrusive**:
+This loader is designed to be **non-intrusive** and provides both **async** and **sync** resolve hooks:
 
 1. **Always tries default Node.js resolution first**
    - Lets Node.js handle all normal module resolution
    - Only activates when Node.js fails with `ERR_MODULE_NOT_FOUND`
+   - Works for both dynamic imports and `import.meta.resolve()`
 
 2. **Fallback resolution** - When default resolution fails, the loader tries:
    - TypeScript path aliases (if configured via tsconfig.json)
@@ -88,7 +115,12 @@ This loader is designed to be **non-intrusive**:
    - Extensionless imports with multiple extension candidates
    - oxc-resolver for fast filesystem lookups
 
-3. **Efficient caching**
+3. **Dual resolution modes**
+   - **Async hook** (`resolve`) - Used for dynamic imports and regular import statements
+   - **Sync hook** (`resolveSync`) - Used by `import.meta.resolve()` for synchronous resolution
+   - Both hooks share the same resolution logic and capabilities
+
+4. **Efficient caching**
    - All resolutions are cached automatically by oxc-resolver
    - Built-in caching minimizes filesystem access for repeated imports
    - Cache can be cleared when needed via `clearCache()`
@@ -97,6 +129,7 @@ This approach ensures:
 
 - ✅ No performance impact on standard Node.js module resolution
 - ✅ No interference with existing working imports
+- ✅ Full support for both async and sync resolution APIs
 - ✅ Only enhances resolution when needed
 
 ## Performance

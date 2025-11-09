@@ -171,4 +171,37 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
       }
     });
   });
+
+  describe("import.meta.resolve", () => {
+    it("should resolve TypeScript files via import.meta.resolve (sync hook)", async () => {
+      const fixturePath = join(testDir, "fixtures", "import-meta-resolve", "main.ts");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Resolved extensionless .ts import"),
+        `Expected to resolve extensionless .ts import. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Resolved .ts import with extension"),
+        `Expected to resolve .ts import with extension. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Resolved path alias"),
+        `Expected to resolve path alias. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("✓ Successfully imported resolved module"),
+        `Expected to import resolved module. Got: ${result.stdout}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: import.meta.resolve with TypeScript files"),
+        `Expected success message. Got: ${result.stdout}`,
+      );
+    });
+  });
 });
