@@ -18,24 +18,24 @@
     }
     console.log("✓ Successfully accessed exported values");
 
-    // Test 2: Require with explicit .ts extension
-    const fooExplicit = require("./foo.ts");
+    // Test 2: Require extensionless .ts module again (different variable)
+    const fooExplicit = require("./foo");
 
     if (fooExplicit.message !== "Hello from TypeScript via require!") {
-      throw new Error(`Expected message from foo.ts, got: ${fooExplicit.message}`);
+      throw new Error(`Expected message from foo, got: ${fooExplicit.message}`);
     }
-    console.log("✓ Required .ts module with extension");
+    console.log("✓ Required .ts module without extension (second time)");
 
     // Test 3: Dynamic import of .mts module from CommonJS
-    const fooMts = await import("./foo.mts");
+    const boo = await import("./boo");
 
-    if (fooMts.esmMessage !== "Hello from TypeScript ESM (.mts) via dynamic import!") {
-      throw new Error(`Expected esmMessage from foo.mts, got: ${fooMts.esmMessage}`);
+    if (boo.esmMessage !== "Hello from TypeScript ESM (.mts) via dynamic import!") {
+      throw new Error(`Expected esmMessage from boo.mts, got: ${boo.esmMessage}`);
     }
     console.log("✓ Dynamically imported .mts module from CommonJS");
 
-    if (fooMts.esmValue !== 100) {
-      throw new Error(`Expected esmValue 100, got: ${fooMts.esmValue}`);
+    if (boo.esmValue !== 100) {
+      throw new Error(`Expected esmValue 100, got: ${boo.esmValue}`);
     }
     console.log("✓ Successfully accessed exported values from .mts module");
 

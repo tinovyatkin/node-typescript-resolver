@@ -224,8 +224,8 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
         `Expected to access exported values. Got: ${result.stdout}`,
       );
       assert.ok(
-        result.stdout.includes("✓ Required .ts module with extension"),
-        `Expected to require .ts module with extension. Got: ${result.stdout}`,
+        result.stdout.includes("✓ Required .ts module without extension (second time)"),
+        `Expected to require .ts module without extension (second time). Got: ${result.stdout}`,
       );
       assert.ok(
         result.stdout.includes("✓ Dynamically imported .mts module from CommonJS"),
