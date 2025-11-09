@@ -142,5 +142,33 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
         `Expected extensionless entry point to resolve. Got: ${result.stdout}`,
       );
     });
+
+    it("should resolve path alias entry point from subdirectory tsconfig", async () => {
+      // Run from the fixture directory so its tsconfig.json is used
+      const fixturePath = "@app";
+      const fixtureDir = join(testDir, "fixtures", "entry-point");
+
+      try {
+        const { stdout } = await execFileAsync(
+          process.execPath,
+          ["--no-warnings", "--experimental-strip-types", "--import", loaderPath, fixturePath],
+          {
+            cwd: fixtureDir,
+            env: { ...process.env, NODE_NO_WARNINGS: "1" },
+          },
+        );
+
+        assert.ok(
+          stdout.includes("SUCCESS: path alias entry point resolved"),
+          `Expected path alias entry point to resolve. Got: ${stdout}`,
+        );
+      } catch (error) {
+        const execError = error as ExecFileException & {
+          stderr?: Buffer | string;
+          stdout?: Buffer | string;
+        };
+        assert.fail(`Process should not throw. stderr: ${execError.stderr?.toString() ?? ""}`);
+      }
+    });
   });
 });

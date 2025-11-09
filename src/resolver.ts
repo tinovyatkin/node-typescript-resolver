@@ -50,13 +50,20 @@ export class TypeScriptResolver {
    */
   async resolve(
     specifier: string,
-    parent: string,
+    parent: string | undefined,
     conditions: readonly string[] = ["node", "import"],
   ): Promise<null | string> {
-    // Convert parent URL to path if needed
-    const parentPath = parent.startsWith("file://") ? fileURLToPath(parent) : parent;
+    // Convert parent URL to path if needed, fallback to cwd if undefined
+    let parentPath: string;
+    if (parent === undefined) {
+      parentPath = process.cwd();
+    } else {
+      parentPath = parent.startsWith("file://") ? fileURLToPath(parent) : parent;
+    }
 
-    const parentDir = dirname(parentPath);
+    // If parent is a directory (ends with /), use it directly
+    // Otherwise, get the directory containing the parent file
+    const parentDir = parentPath.endsWith("/") ? parentPath : dirname(parentPath);
 
     // Get resolver with appropriate conditions
     const resolver = this.getResolverForConditions(conditions);

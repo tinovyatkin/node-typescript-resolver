@@ -1,5 +1,5 @@
 import type { ResolveHook } from "node:module";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { createResolver } from "./resolver.ts";
 
@@ -39,8 +39,8 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
     }
 
     // Get parent URL for custom resolution
-    // For entry points, parentURL is undefined, so fallback to current working directory
-    const parentURL = context.parentURL ?? `file://${process.cwd()}/`;
+    // May be undefined for entry points - resolver will handle the fallback
+    const parentURL = context.parentURL;
 
     // Skip built-in modules and remote URLs - they should have been handled by Node.js
     if (
@@ -52,14 +52,20 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
       throw error;
     }
 
+    // Normalize file:// URLs to extract bare specifiers and derive parent
+    const { parent: resolveParent, specifier: resolveSpecifier } = normalizeFileUrl(
+      specifier,
+      parentURL,
+    );
+
     // Try our custom resolver as a fallback
     try {
       if (!resolver) {
         throw error;
       }
 
-      // Pass context.conditions to the resolver so it uses the correct conditions
-      const resolved = await resolver.resolve(specifier, parentURL, context.conditions);
+      // oxc-resolver handles file:// URLs for paths, but needs bare specifiers for aliases
+      const resolved = await resolver.resolve(resolveSpecifier, resolveParent, context.conditions);
 
       if (resolved) {
         // Convert to URL
@@ -106,4 +112,41 @@ function isResolutionError(error: unknown): error is Error & { code: string } {
       error.code === "ERR_UNSUPPORTED_DIR_IMPORT" ||
       error.code === "ERR_INVALID_MODULE_SPECIFIER")
   );
+}
+
+/**
+ * Extract bare specifier and parent from file:// URL when needed
+ * For entry points, Node.js converts bare specifiers to file:// URLs
+ */
+function normalizeFileUrl(
+  specifier: string,
+  parentURL: string | undefined,
+): { parent: string | undefined; specifier: string } {
+  if (!specifier.startsWith("file://")) {
+    return { parent: parentURL, specifier };
+  }
+
+  // If we have a parent and specifier is under it, extract relative path
+  if (parentURL?.startsWith("file://") && specifier.startsWith(parentURL)) {
+    return {
+      parent: parentURL,
+      specifier: specifier.slice(parentURL.length),
+    };
+  }
+
+  // No parent - extract filename and derive parent from specifier's directory
+  if (!parentURL) {
+    const urlPath = fileURLToPath(specifier);
+    const segments = urlPath.split("/");
+    const filename = segments.at(-1);
+    if (filename) {
+      const dir = segments.slice(0, -1).join("/");
+      return {
+        parent: `file://${dir}/`,
+        specifier: filename,
+      };
+    }
+  }
+
+  return { parent: parentURL, specifier };
 }
