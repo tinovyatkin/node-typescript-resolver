@@ -39,12 +39,10 @@ export const resolve: ResolveHook = async (specifier, context, nextResolve) => {
     }
 
     // Get parent URL for custom resolution
-    const parentURL = context.parentURL;
-    if (!parentURL) {
-      throw error;
-    }
+    // For entry points, parentURL is undefined, so fallback to current working directory
+    const parentURL = context.parentURL ?? `file://${process.cwd()}/`;
 
-    // Skip built-in modules and URLs - they should have been handled by Node.js
+    // Skip built-in modules and remote URLs - they should have been handled by Node.js
     if (
       specifier.startsWith("node:") ||
       specifier.startsWith("http://") ||

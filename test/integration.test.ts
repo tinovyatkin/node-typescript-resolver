@@ -126,4 +126,21 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
       );
     });
   });
+
+  describe("entry points", () => {
+    it("should resolve extensionless entry point", async () => {
+      const fixturePath = join(testDir, "fixtures", "entry-point", "entry");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: entry point without extension resolved"),
+        `Expected extensionless entry point to resolve. Got: ${result.stdout}`,
+      );
+    });
+  });
 });
