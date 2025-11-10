@@ -141,6 +141,17 @@ export const resolveSync: ResolveHookSync = (specifier, context, nextResolve) =>
         throw error;
       }
 
+      // For ERR_PACKAGE_PATH_NOT_EXPORTED, try to resolve with 'types' condition
+      // This handles type-only packages like type-fest that only export types
+      if (error.code === "ERR_PACKAGE_PATH_NOT_EXPORTED") {
+        try {
+          return tryResolveTypeOnlyPackageSync(specifier, context, nextResolve);
+        } catch {
+          // Types resolution also failed, continue with standard resolution
+        }
+      }
+
+      // Use standard resolution for other errors
       // oxc-resolver handles file:// URLs for paths, but needs bare specifiers for aliases
       const resolved: null | string = resolver.resolveSync(
         resolveSpecifier,
@@ -253,6 +264,40 @@ async function tryResolveTypeOnlyPackage(
   nextResolve: Parameters<ResolveHook>[2],
 ): Promise<Awaited<ReturnType<ResolveHook>>> {
   const typesResult = await nextResolve(specifier, {
+    ...context,
+    conditions: [...(context.conditions ?? []), "types"],
+  });
+
+  // If resolved to .d.ts in node_modules, return empty data URL
+  // Node.js can't strip types from files in node_modules, but type-only imports
+  // don't need runtime code anyway
+  if (typesResult.url.endsWith(".d.ts") && typesResult.url.includes("/node_modules/")) {
+    return {
+      format: "module",
+      shortCircuit: true,
+      url: "data:text/javascript,",
+    };
+  }
+
+  return {
+    format: undefined,
+    importAttributes: typesResult.importAttributes,
+    shortCircuit: true,
+    url: typesResult.url,
+  };
+}
+
+/**
+ * Synchronous version of tryResolveTypeOnlyPackage
+ * Try to resolve type-only packages that only export TypeScript types
+ * Returns result if successful, throws if resolution fails
+ */
+function tryResolveTypeOnlyPackageSync(
+  specifier: string,
+  context: Parameters<ResolveHookSync>[1],
+  nextResolve: Parameters<ResolveHookSync>[2],
+): ReturnType<ResolveHookSync> {
+  const typesResult = nextResolve(specifier, {
     ...context,
     conditions: [...(context.conditions ?? []), "types"],
   });

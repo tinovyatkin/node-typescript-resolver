@@ -33,6 +33,9 @@ node --import node-typescript-resolver your-app.ts
 
 # Or with --experimental-transform-types for type transformations
 node --experimental-transform-types --import node-typescript-resolver your-app.ts
+
+# For CommonJS TypeScript entry points, use --require instead
+node --require node-typescript-resolver entry.cts
 ```
 
 This allows you to write TypeScript imports like:
