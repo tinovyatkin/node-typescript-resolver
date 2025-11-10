@@ -291,21 +291,40 @@ async function tryResolveTypeOnlyPackage(
  * Synchronous version of tryResolveTypeOnlyPackage
  * Try to resolve type-only packages that only export TypeScript types
  * Returns result if successful, throws if resolution fails
+ *
+ * Note: Unlike the async version, sync nextResolve doesn't properly handle
+ * type-only packages even with the 'types' condition. So we use oxc-resolver
+ * directly with the 'types' condition added.
  */
 function tryResolveTypeOnlyPackageSync(
   specifier: string,
   context: Parameters<ResolveHookSync>[1],
-  nextResolve: Parameters<ResolveHookSync>[2],
+  _nextResolve: Parameters<ResolveHookSync>[2],
 ): ReturnType<ResolveHookSync> {
-  const typesResult = nextResolve(specifier, {
-    ...context,
-    conditions: [...(context.conditions ?? []), "types"],
-  });
+  if (!resolver) {
+    throw new Error("Resolver not initialized");
+  }
+
+  // Use oxc-resolver with 'types' condition to resolve type-only packages
+  // Node.js's sync nextResolve doesn't handle these properly
+  const conditionsWithTypes = [...(context.conditions ?? []), "types"];
+
+  // Normalize parent URL and specifier for resolution
+  const { parent: resolveParent, specifier: resolveSpecifier } = normalizeFileUrl(
+    specifier,
+    context.parentURL,
+  );
+
+  const resolved = resolver.resolveSync(resolveSpecifier, resolveParent, conditionsWithTypes);
+
+  if (!resolved) {
+    throw new Error(`Failed to resolve type-only package: ${specifier}`);
+  }
 
   // If resolved to .d.ts in node_modules, return empty data URL
   // Node.js can't strip types from files in node_modules, but type-only imports
   // don't need runtime code anyway
-  if (typesResult.url.endsWith(".d.ts") && typesResult.url.includes("/node_modules/")) {
+  if (resolved.endsWith(".d.ts") && resolved.includes("/node_modules/")) {
     return {
       format: "module",
       shortCircuit: true,
@@ -313,10 +332,6 @@ function tryResolveTypeOnlyPackageSync(
     };
   }
 
-  return {
-    format: undefined,
-    importAttributes: typesResult.importAttributes,
-    shortCircuit: true,
-    url: typesResult.url,
-  };
+  // Return the resolved result
+  return formatResolvedResult(resolved);
 }
