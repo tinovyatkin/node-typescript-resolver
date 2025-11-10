@@ -321,10 +321,13 @@ function tryResolveTypeOnlyPackageSync(
     throw new Error(`Failed to resolve type-only package: ${specifier}`);
   }
 
+  // Convert to URL for cross-platform path checking
+  const resolvedUrl = pathToFileURL(resolved).href;
+
   // If resolved to .d.ts in node_modules, return empty data URL
   // Node.js can't strip types from files in node_modules, but type-only imports
   // don't need runtime code anyway
-  if (resolved.endsWith(".d.ts") && resolved.includes("/node_modules/")) {
+  if (resolvedUrl.endsWith(".d.ts") && resolvedUrl.includes("/node_modules/")) {
     return {
       format: "module",
       shortCircuit: true,
