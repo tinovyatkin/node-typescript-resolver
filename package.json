@@ -2,16 +2,18 @@
   "name": "node-typescript-resolver",
   "version": "0.5.2",
   "description": "Companion loader for Node.js's built-in TypeScript support that adds TypeScript-aware import resolution",
-  "main": "./dist/index.js",
+  "main": "./dist/require.js",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/require.js"
     },
     "./loader": {
       "types": "./dist/loader.d.ts",
-      "import": "./dist/loader.js"
+      "import": "./dist/loader.js",
+      "require": "./dist/loader.js"
     }
   },
   "files": [

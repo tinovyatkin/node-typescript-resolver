@@ -16,6 +16,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          fetch-depth: 0 # Fetch all history for branch checks
+
+      - name: Verify tag is on main branch
+        if: github.ref_type == 'tag'
+        run: |
+          TAG_COMMIT=$(git rev-list -n 1 "${{ github.ref }}")
+          if ! git branch -r --contains "$TAG_COMMIT" | grep -q 'origin/main'; then
+            echo "Error: Tag is not on main branch"
+            exit 1
+          fi
+          echo "Tag is on main branch, proceeding with publish"
+
+      - name: Verify workflow_dispatch is from main
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo "Error: workflow_dispatch must be triggered from main branch"
+          exit 1
 
       - name: Setup Node.js
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
