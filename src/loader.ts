@@ -415,10 +415,10 @@ async function filterTypeOnlyImports(source: string, url: string): Promise<strin
           modifications.push({ end: removeEnd, replacement: "", start: removeStart });
         }
       } else {
-        // No other imports, comment out the entire import
+        // No other imports, remove the entire import
         modifications.push({
           end: node.end,
-          replacement: `/* removed type-only: ${source.slice(node.start, node.end)} */`,
+          replacement: "",
           start: node.start,
         });
       }
