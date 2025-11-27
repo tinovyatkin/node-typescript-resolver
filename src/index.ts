@@ -38,9 +38,12 @@ import { initialize, resolveSync } from "./loader.ts";
 initialize({ argv, execArgv });
 
 // Register synchronous hooks (for import.meta.resolve and require support)
+// Note: load hook is not available in registerHooks (sync only), but we include
+// resolveSync for synchronous resolution support
 registerHooks({ resolve: resolveSync });
 
-// Register asynchronous loader (for dynamic imports)
+// Register asynchronous loader (for dynamic imports and load hook)
+// The load hook filters out type-only imports that would cause runtime errors
 // Use the same extension as the current file (works for both .ts and .js)
 const loaderPath = import.meta.url.replace(/index\.(ts|js)$/, "loader.$1");
 register(loaderPath, import.meta.url, { data: { argv, execArgv } });

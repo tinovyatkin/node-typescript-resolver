@@ -14,8 +14,9 @@ This package provides a fast and efficient TypeScript module resolver for Node.j
 - 📦 **CommonJS require() support** (require TypeScript files with extensionless imports)
 - 🧵 **Worker threads support** (extensionless imports inside worker threads)
 - 🎨 **Type-only imports** (import { type Foo } from 'type-only-packages')
+- 🔮 **Implicit type-only imports** (automatically filters imports like `{ PoolClient }` from 'pg' that only exist as types)
 - ⚡ **Efficient caching** for fast repeated resolutions
-- 🔧 **Built on [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)** for blazing-fast resolution
+- 🔧 **Built on [oxc-resolver](https://www.npmjs.com/package/oxc-resolver) and [oxc-parser](https://www.npmjs.com/package/oxc-parser)** for blazing-fast resolution and parsing
 
 ## Installation
 
@@ -162,6 +163,35 @@ import { type JsonValue } from "type-fest";
 3. Returning an empty module for runtime (since type-only imports don't need runtime code)
 
 This allows you to use TypeScript's `import { type }` syntax with type-only packages without any runtime errors.
+
+### Implicit Type-Only Imports
+
+The loader also handles **implicit type-only imports** - imports that are only used as types but aren't explicitly marked with the `type` keyword:
+
+```typescript
+// This works even though PoolClient is only a type (not exported at runtime)
+import { PoolClient, Pool } from "pg";
+
+function query(client: PoolClient) {
+  return client.query("SELECT 1");
+}
+
+const pool = new Pool(); // Pool is a runtime export, works fine
+```
+
+Node.js's type stripping doesn't perform import elision like the TypeScript compiler does. This means imports that are only used as types would normally cause runtime errors like:
+
+```text
+SyntaxError: The requested module 'pg' does not provide an export named 'PoolClient'
+```
+
+The loader's `load` hook automatically detects and filters out these implicit type-only imports by:
+
+1. Parsing TypeScript files with `oxc-parser`
+2. Checking which named imports actually exist in the target module's runtime exports
+3. Removing imports that don't exist at runtime (they're type-only)
+
+This makes migration from tools like `tsx` or `ts-node` seamless, as you don't need to add explicit `type` annotations to all your type-only imports.
 
 ## How It Works
 
