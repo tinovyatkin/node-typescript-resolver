@@ -383,7 +383,7 @@ async function filterTypeOnlyImports(source: string, url: string): Promise<strin
 
       // Handle both Identifier and StringLiteral for imported name
       const imported = spec.imported;
-      const importedName = "name" in imported ? imported.name : spec.local.name;
+      const importedName = "name" in imported ? imported.name : imported.value;
       if (!runtimeExports.has(importedName)) {
         specifiersToRemove.push({ end: spec.end, name: spec.local.name, start: spec.start });
       }
