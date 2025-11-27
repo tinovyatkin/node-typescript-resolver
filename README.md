@@ -23,6 +23,67 @@ This package provides a fast and efficient TypeScript module resolver for Node.j
 npm install node-typescript-resolver
 ```
 
+## Prerequisites: Type-Only Import Syntax
+
+Node.js's built-in TypeScript support does not perform import elision—it doesn't analyze which imports are used only as types. This applies to both type stripping mode and `--experimental-transform-types` mode. Imports like `import { SomeType } from './module'` will remain in the emitted JavaScript—causing runtime errors in ESM modules if `SomeType` is only a type (CommonJS will silently get `undefined`).
+
+We believe `--experimental-transform-types` should handle import elision, and this may improve in future Node.js versions (the flag is still experimental). Check [Node.js TypeScript documentation](https://nodejs.org/en/learn/typescript/run-natively) for updates. Until then, the solution is to use explicit type-only import syntax (`import type { ... }` or `import { type ... }`), enforced through ESLint and TypeScript configuration.
+
+### 1. Install typescript-eslint (if not already installed)
+
+```bash
+npm install -D typescript-eslint
+```
+
+### 2. Fix existing violations
+
+Run this command to automatically fix all type-only imports in your codebase:
+
+```bash
+npx eslint --no-config-lookup --ext .ts,.tsx,.mts,.cts \
+  --parser @typescript-eslint/parser \
+  --plugin @typescript-eslint/eslint-plugin \
+  --rule '@typescript-eslint/consistent-type-imports: [error, {prefer: type-imports, fixStyle: separate-type-imports}]' \
+  --fix .
+```
+
+### 3. Add ESLint rule for future violations
+
+Add this rule to your ESLint configuration to catch violations automatically:
+
+```javascript
+// eslint.config.mjs
+{
+  rules: {
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      {
+        prefer: "type-imports",
+        fixStyle: "separate-type-imports",
+      },
+    ],
+  },
+}
+```
+
+See [@typescript-eslint/consistent-type-imports documentation](https://typescript-eslint.io/rules/consistent-type-imports) for more options.
+
+### 4. Enable verbatimModuleSyntax in tsconfig.json
+
+Add this compiler option to make TypeScript enforce explicit type-only syntax:
+
+```json
+{
+  "compilerOptions": {
+    "verbatimModuleSyntax": true
+  }
+}
+```
+
+This ensures any import without a `type` modifier is preserved in the output, making the behavior predictable and compatible with Node.js type stripping.
+
+See [verbatimModuleSyntax documentation](https://www.typescriptlang.org/tsconfig/verbatimModuleSyntax.html) for details.
+
 ## Usage
 
 Use the loader alongside Node.js's built-in TypeScript support to enable TypeScript-aware module resolution:
