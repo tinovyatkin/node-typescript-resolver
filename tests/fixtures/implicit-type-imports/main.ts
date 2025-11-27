@@ -1,3 +1,5 @@
+import process from "node:process";
+
 // Test implicit type-only imports (without explicit `type` keyword)
 // This tests the load hook that filters out type-only imports at runtime
 
