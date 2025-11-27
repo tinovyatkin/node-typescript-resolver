@@ -307,5 +307,20 @@ describe("Integration Tests - Loader with real Node.js processes", () => {
         `Expected type import to work correctly. Got: ${result.stdout}`,
       );
     });
+
+    it("should handle implicit type-only imports (without explicit type keyword)", async () => {
+      const fixturePath = join(testDir, "fixtures", "implicit-type-imports", "main.ts");
+      const result = await runFixture(fixturePath);
+
+      assert.strictEqual(
+        result.exitCode,
+        0,
+        `Process should exit with code 0. stderr: ${result.stderr}`,
+      );
+      assert.ok(
+        result.stdout.includes("SUCCESS: implicit type-only imports handled correctly"),
+        `Expected implicit type-only imports to work. Got: ${result.stdout}`,
+      );
+    });
   });
 });

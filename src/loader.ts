@@ -1,6 +1,8 @@
-import type { ResolveHook, ResolveHookSync } from "node:module";
+import type { LoadHook, ResolveHook, ResolveHookSync } from "node:module";
 import { basename, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+
+import { parse } from "oxc-parser";
 
 import { createResolver } from "./resolver.ts";
 
@@ -338,3 +340,199 @@ function tryResolveTypeOnlyPackageSync(
   // Return the resolved result
   return formatResolvedResult(resolved);
 }
+
+/**
+ * Cache for runtime exports of external packages
+ * Maps package specifier to Set of exported names
+ */
+const runtimeExportsCache = new Map<string, null | Set<string>>();
+
+/**
+ * Filter type-only imports from source code
+ * Removes named imports that don't exist in the target module's runtime exports
+ */
+// eslint-disable-next-line sonarjs/cognitive-complexity -- Complex but well-structured import filtering logic
+async function filterTypeOnlyImports(source: string, url: string): Promise<string> {
+  const result = await parse(url, source);
+
+  if (result.errors.length > 0) {
+    return source;
+  }
+
+  // Collect all modifications needed (in reverse order for safe string manipulation)
+  const modifications: { end: number; replacement: string; start: number }[] = [];
+
+  for (const node of result.program.body) {
+    if (node.type !== "ImportDeclaration") continue;
+    if (node.importKind === "type") continue;
+
+    const specifier = node.source.value;
+    if (specifier.startsWith(".") || specifier.startsWith("/") || specifier.startsWith("node:")) {
+      continue;
+    }
+
+    const runtimeExports = await getRuntimeExports(specifier);
+    if (!runtimeExports) continue;
+
+    // Find named import specifiers that don't exist at runtime
+    const specifiersToRemove: { end: number; name: string; start: number }[] = [];
+
+    for (const spec of node.specifiers ?? []) {
+      if (spec.type !== "ImportSpecifier") continue;
+      if (spec.importKind === "type") continue;
+
+      // Handle both Identifier and StringLiteral for imported name
+      const imported = spec.imported;
+      const importedName = "name" in imported ? imported.name : imported.value;
+      if (!runtimeExports.has(importedName)) {
+        specifiersToRemove.push({ end: spec.end, name: spec.local.name, start: spec.start });
+      }
+    }
+
+    if (specifiersToRemove.length === 0) continue;
+
+    const namedSpecifiers = (node.specifiers ?? []).filter((s) => s.type === "ImportSpecifier");
+    const remainingCount = namedSpecifiers.length - specifiersToRemove.length;
+
+    if (remainingCount === 0) {
+      const hasOtherImports = (node.specifiers ?? []).some(
+        (s) => s.type === "ImportDefaultSpecifier" || s.type === "ImportNamespaceSpecifier",
+      );
+
+      if (hasOtherImports) {
+        // Remove just the named imports part: import foo, { Type } from 'x' -> import foo from 'x'
+        const importText = source.slice(node.start, node.end);
+        const braceStart = importText.indexOf("{");
+        const braceEnd = importText.lastIndexOf("}");
+        if (braceStart !== -1 && braceEnd !== -1) {
+          let removeStart = node.start + braceStart;
+          const removeEnd = node.start + braceEnd + 1;
+          const beforeBraces = importText.slice(0, braceStart);
+          const commaIndex = beforeBraces.lastIndexOf(",");
+          if (commaIndex !== -1) {
+            removeStart = node.start + commaIndex;
+          }
+          modifications.push({ end: removeEnd, replacement: "", start: removeStart });
+        }
+      } else {
+        // No other imports, remove the entire import
+        modifications.push({
+          end: node.end,
+          replacement: "",
+          start: node.start,
+        });
+      }
+    } else {
+      // Some named imports remain - remove only the type-only ones
+      const sortedToRemove = specifiersToRemove.toSorted((a, b) => b.start - a.start);
+
+      for (const spec of sortedToRemove) {
+        let removeStart = spec.start;
+        let removeEnd = spec.end;
+
+        const afterSpec = source.slice(spec.end, node.end);
+        const trailingMatch = /^(\s*,\s*)/.exec(afterSpec);
+        if (trailingMatch) {
+          removeEnd = spec.end + trailingMatch[1].length;
+        } else {
+          const beforeSpec = source.slice(node.start, spec.start);
+          const leadingMatch = /,\s*$/.exec(beforeSpec);
+          if (leadingMatch) {
+            removeStart = spec.start - leadingMatch[0].length;
+          }
+        }
+
+        modifications.push({ end: removeEnd, replacement: "", start: removeStart });
+      }
+    }
+  }
+
+  if (modifications.length === 0) {
+    return source;
+  }
+
+  const sortedMods = modifications.toSorted((a, b) => b.start - a.start);
+  let modified = source;
+  for (const mod of sortedMods) {
+    modified = modified.slice(0, mod.start) + mod.replacement + modified.slice(mod.end);
+  }
+
+  return modified;
+}
+
+/**
+ * Pending imports map to deduplicate concurrent requests for the same specifier
+ */
+const pendingImports = new Map<string, Promise<null | Set<string>>>();
+
+/**
+ * Get runtime exports for an external package
+ * Uses dynamic import and caches the result
+ */
+async function getRuntimeExports(specifier: string): Promise<null | Set<string>> {
+  // Check cache first
+  const cached = runtimeExportsCache.get(specifier);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  // Check for pending import to avoid duplicate concurrent imports
+  const pending = pendingImports.get(specifier);
+  if (pending) {
+    return pending;
+  }
+
+  const promise = (async () => {
+    try {
+      // Dynamic import to get actual runtime exports
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Dynamic import returns unknown module
+      const mod = await import(specifier);
+      const exports = new Set(Object.keys(mod as object));
+      runtimeExportsCache.set(specifier, exports);
+      return exports;
+    } catch {
+      // Can't import module, return null to skip filtering
+      runtimeExportsCache.set(specifier, null);
+      return null;
+    } finally {
+      pendingImports.delete(specifier);
+    }
+  })();
+
+  pendingImports.set(specifier, promise);
+  return promise;
+}
+
+/**
+ * Load hook for Node.js loader API
+ *
+ * This hook intercepts module loading to filter out type-only imports
+ * that would cause runtime errors in ESM TypeScript files.
+ *
+ * Only processes 'module-typescript' format files since:
+ * - CJS TypeScript files handle missing exports gracefully (returns undefined)
+ * - ESM has strict static binding that throws on missing exports
+ */
+export const load: LoadHook = async (url, context, nextLoad) => {
+  const result = await nextLoad(url, context);
+
+  // Only process ESM TypeScript files
+  // CJS TypeScript works fine with missing exports (returns undefined)
+  if (result.format !== "module-typescript" || result.source == null) {
+    return result;
+  }
+
+  const source = result.source.toString();
+
+  // Filter out type-only imports that don't exist at runtime
+  const filtered = await filterTypeOnlyImports(source, url);
+
+  if (filtered !== source) {
+    return {
+      ...result,
+      source: filtered,
+    };
+  }
+
+  return result;
+};
