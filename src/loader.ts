@@ -461,6 +461,11 @@ async function filterTypeOnlyImports(source: string, url: string): Promise<strin
 }
 
 /**
+ * Pending imports map to deduplicate concurrent requests for the same specifier
+ */
+const pendingImports = new Map<string, Promise<null | Set<string>>>();
+
+/**
  * Get runtime exports for an external package
  * Uses dynamic import and caches the result
  */
@@ -471,18 +476,31 @@ async function getRuntimeExports(specifier: string): Promise<null | Set<string>>
     return cached;
   }
 
-  try {
-    // Dynamic import to get actual runtime exports
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Dynamic import returns unknown module
-    const mod = await import(specifier);
-    const exports = new Set(Object.keys(mod as object));
-    runtimeExportsCache.set(specifier, exports);
-    return exports;
-  } catch {
-    // Can't import module, return null to skip filtering
-    runtimeExportsCache.set(specifier, null);
-    return null;
+  // Check for pending import to avoid duplicate concurrent imports
+  const pending = pendingImports.get(specifier);
+  if (pending) {
+    return pending;
   }
+
+  const promise = (async () => {
+    try {
+      // Dynamic import to get actual runtime exports
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Dynamic import returns unknown module
+      const mod = await import(specifier);
+      const exports = new Set(Object.keys(mod as object));
+      runtimeExportsCache.set(specifier, exports);
+      return exports;
+    } catch {
+      // Can't import module, return null to skip filtering
+      runtimeExportsCache.set(specifier, null);
+      return null;
+    } finally {
+      pendingImports.delete(specifier);
+    }
+  })();
+
+  pendingImports.set(specifier, promise);
+  return promise;
 }
 
 /**
