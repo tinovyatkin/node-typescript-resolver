@@ -1,6 +1,6 @@
 {
   "name": "node-typescript-resolver",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Companion loader for Node.js's built-in TypeScript support that adds TypeScript-aware import resolution",
   "main": "./dist/require.js",
   "type": "module",
@@ -52,7 +52,7 @@
     "node": ">=22.15.0"
   },
   "dependencies": {
-    "oxc-resolver": "^11.13.1"
+    "oxc-resolver": ">=11.13.1 <11.14.0"
   },
   "devDependencies": {
     "@eslint-community/eslint-plugin-eslint-comments": "4.5.0",
