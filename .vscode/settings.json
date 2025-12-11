@@ -3,25 +3,30 @@
   "eslint.enable": false,
   "biome.enabled": false,
 
-  // Enable oxc extension (linter only, Prettier handles formatting)
+  // Enable oxc extension (linter and formatter)
   "oxc.enable": true,
   "oxc.configPath": ".oxlintrc.json",
   "oxc.fixKind": "safe_fix_or_suggestion",
   "oxc.typeAware": true,
-  "oxc.formatter.enable": false,
+  "oxc.formatter.enable": true,
 
-  // Editor settings for TypeScript
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // Use oxc as default formatter for JS/TS
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.codeActionsOnSave": {
       "source.fixAll.oxc": "explicit"
     }
   },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.codeActionsOnSave": {
       "source.fixAll.oxc": "explicit"
     }
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   }
 }

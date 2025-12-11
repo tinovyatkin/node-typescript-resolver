@@ -37,6 +37,9 @@ jobs:
       - name: Run Oxlint
         run: npx oxlint --type-aware
 
+      - name: Check formatting
+        run: npm run format:check
+
       - name: TypeScript type check
         run: npm run build
 

@@ -5,7 +5,7 @@
 - `src/`: TypeScript sources (`index.ts` entry, `resolver.ts` core logic, `loader.ts`/`require.ts` hooks).
 - `tests/` holds Node test suites (`*.test.ts`) plus fixtures in `tests/fixtures/`.
 - `dist/`: generated; never edit—regenerate with `npm run build` after source/type changes.
-- Configs: `tsconfig.json`, `.oxlintrc.json`, `.prettierrc.yml`, `.commitlintrc.yaml`, `lefthook.yml`.
+- Configs: `tsconfig.json`, `.oxlintrc.json`, `.oxfmtrc.json`, `.commitlintrc.yaml`, `lefthook.yml`.
 
 ## Build, Test, and Development Commands
 
@@ -14,7 +14,8 @@
 - `npm run test:ci` – same tests with coverage reporters (lcov + JUnit) for CI.
 - `node --test --test-reporter=dot` – quick local reporter; `node --test tests/resolver.test.ts` for focused runs.
 - `npm run lint` – run oxlint with type-aware rules; `npm run lint:fix` to auto-fix.
-- Format locally when needed: `npx prettier --write .` (lefthook runs lint/format automatically on staged files if installed).
+- `npm run format` – format JS/TS files with oxfmt; `npm run format:check` to verify.
+- Lefthook runs lint/format automatically on staged files if installed.
 
 ## Architecture Highlights
 
@@ -25,7 +26,7 @@
 
 ## Coding Style & Naming Conventions
 
-- Prettier enforces print width 100, semicolons, trailing commas, LF endings; organize-imports and JSDoc plugins.
+- Oxfmt enforces print width 100, semicolons, trailing commas, LF endings for JS/TS files.
 - Oxlint: prefer type-only imports, forbid `console.*` (use a logger or pass one in), disallow unused vars unless prefixed with `_`. Type-aware linting enabled via `--type-aware` flag.
 - Keep modules ESM; names should be descriptive and kebab- or camel-cased to match surrounding files. Tests mirror the module name (`resolver.test.ts` for `resolver.ts`).
 

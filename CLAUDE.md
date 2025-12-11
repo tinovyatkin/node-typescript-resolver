@@ -31,6 +31,12 @@ npm run lint
 
 # Lint and auto-fix
 npm run lint:fix
+
+# Format code
+npm run format
+
+# Check formatting
+npm run format:check
 ```
 
 ## Architecture
