@@ -4,7 +4,7 @@
     "module": "ESNext",
     "baseUrl": ".",
     "paths": {
-      "@app": ["app.ts"]
-    }
-  }
+      "@app": ["app.ts"],
+    },
+  },
 }

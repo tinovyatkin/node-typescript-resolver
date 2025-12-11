@@ -15,7 +15,7 @@ pre-commit:
       run: npx -y -q oxlint --fix --fix-suggestions {staged_files}
       stage_fixed: true
     format:
-      glob: "*.{js,ts,cjs,mjs,mts,cts,jsx,tsx}"
+      glob: "*.{js,ts,cjs,mjs,mts,cts,jsx,tsx,json,yml,yaml}"
       run: npx -y -q oxfmt --no-error-on-unmatched-pattern --write {staged_files}
       stage_fixed: true
     taplo:

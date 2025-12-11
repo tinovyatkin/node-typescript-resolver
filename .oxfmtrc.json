@@ -6,8 +6,8 @@
   "endOfLine": "lf",
   "singleAttributePerLine": true,
   "experimentalSortImports": {
-    "partitionByNewline": true,
     "order": "asc",
-    "ignoreCase": true
+    "ignoreCase": true,
+    "newlinesBetween": true
   }
 }

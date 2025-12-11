@@ -68,7 +68,7 @@
     "no-fallthrough": "error",
     "no-console": "error",
 
-    "sort-imports": "off",
+    "sort-imports": "off"
   },
   "overrides": [
     {
@@ -80,7 +80,7 @@
         "typescript/no-unsafe-member-access": "off",
         "typescript/no-unsafe-type-assertion": "off",
         "typescript/strict-boolean-expressions": "off",
-        "no-console": "off",
+        "no-console": "off"
       }
     }
   ],

@@ -1,4 +1,5 @@
 import { type Writable } from "type-fest";
+
 import { type MyType } from "./types";
 
 // Test type-only imports from local .d.ts file
