@@ -11,8 +11,8 @@ pre-commit:
       glob: "**/*.ts"
       run: npx -y -q tsc --noEmit
     lint:
-      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,md,html}"
-      run: npx -y -q eslint --cache --fix {staged_files}
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts}"
+      run: npx -y -q oxlint --fix --fix-suggestions {staged_files}
       stage_fixed: true
     format:
       glob: "*.{json,jsonc,yaml,yml,md,js,html,ts}"

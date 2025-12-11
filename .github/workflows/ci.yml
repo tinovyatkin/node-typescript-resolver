@@ -34,8 +34,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run ESLint
-        run: npx eslint .
+      - name: Run Oxlint
+        run: npx oxlint --type-aware
 
       - name: TypeScript type check
         run: npm run build

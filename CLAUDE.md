@@ -25,6 +25,12 @@ node --test --test-reporter=dot
 
 # Test a single file with TypeScript support
 node --test tests/resolver.test.ts
+
+# Lint with type-aware rules
+npm run lint
+
+# Lint and auto-fix
+npm run lint:fix
 ```
 
 ## Architecture
