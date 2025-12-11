@@ -1,9 +1,13 @@
-import { dirname, sep } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type NapiResolveOptions, ResolverFactory } from "oxc-resolver";
 
 /**
  * Main resolver class that wraps oxc-resolver with TypeScript support
+ *
+ * Uses oxc-resolver's resolveFileSync/resolveFileAsync APIs which:
+ * - Accept a file path directly (no need to extract directory)
+ * - Automatically discover tsconfig.json by traversing parent directories
  */
 export class TypeScriptResolver {
   private readonly baseOptions: NapiResolveOptions;
@@ -22,6 +26,7 @@ export class TypeScriptResolver {
       extensions: [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".json", ".d.ts"],
       mainFields: ["module", "main"],
       // Use tsconfig auto-detection for path aliases support
+      // resolveFileSync/resolveFileAsync handle tsconfig discovery automatically
       tsconfig: options.tsconfigPath
         ? {
             configFile: options.tsconfigPath,
@@ -47,20 +52,24 @@ export class TypeScriptResolver {
 
   /**
    * Resolve a module specifier with specific conditions (async)
+   *
+   * Uses resolveFileAsync which accepts a file path and automatically
+   * discovers tsconfig.json by traversing parent directories.
    */
   async resolve(
     specifier: string,
     parent: string | undefined,
     conditions: readonly string[] = ["node", "import"],
   ): Promise<null | string> {
-    const parentDir = this.getParentDirectory(parent);
+    const parentFile = this.getParentFilePath(parent);
 
     // Get resolver with appropriate conditions
     const resolver = this.getResolverForConditions(conditions);
 
-    // Use oxc-resolver's async method for better performance
+    // Use oxc-resolver's resolveFileAsync - takes file path directly
+    // and automatically discovers tsconfig.json
     try {
-      const result = await resolver.async(parentDir, specifier);
+      const result = await resolver.resolveFileAsync(parentFile, specifier);
 
       // oxc-resolver returns { path: string } on success or { error: string } on failure
       if (result != null && "path" in result && result.path) {
@@ -75,20 +84,24 @@ export class TypeScriptResolver {
 
   /**
    * Resolve a module specifier with specific conditions (sync)
+   *
+   * Uses resolveFileSync which accepts a file path and automatically
+   * discovers tsconfig.json by traversing parent directories.
    */
   resolveSync(
     specifier: string,
     parent: string | undefined,
     conditions: readonly string[] = ["node", "import"],
   ): null | string {
-    const parentDir = this.getParentDirectory(parent);
+    const parentFile = this.getParentFilePath(parent);
 
     // Get resolver with appropriate conditions
     const resolver = this.getResolverForConditions(conditions);
 
-    // Use oxc-resolver's sync method
+    // Use oxc-resolver's resolveFileSync - takes file path directly
+    // and automatically discovers tsconfig.json
     try {
-      const result = resolver.sync(parentDir, specifier);
+      const result = resolver.resolveFileSync(parentFile, specifier);
 
       // oxc-resolver returns { path: string } on success or { error: string } on failure
       if (result != null && "path" in result && result.path) {
@@ -102,30 +115,19 @@ export class TypeScriptResolver {
   }
 
   /**
-   * Convert parent to directory path for resolution
+   * Convert parent URL to file path for resolveFileSync/resolveFileAsync
+   *
+   * The new APIs accept a file path directly and handle tsconfig discovery
+   * automatically by traversing parent directories.
    */
-  private getParentDirectory(parent: string | undefined): string {
-    // Convert parent URL to path if needed, fallback to cwd if undefined
-    let parentPath: string;
+  private getParentFilePath(parent: string | undefined): string {
     if (parent === undefined) {
-      parentPath = process.cwd();
-    } else {
-      parentPath = parent.startsWith("file://") ? fileURLToPath(parent) : parent;
+      // Entry point - use a synthetic file in cwd for tsconfig discovery
+      return join(process.cwd(), "index.ts");
     }
 
-    let parentDir: string;
-    if (parent === undefined) {
-      // Entry point - use cwd directly
-      parentDir = parentPath;
-    } else if (parentPath.endsWith(sep) || parentPath.endsWith("/")) {
-      // Already a directory - use as-is
-      parentDir = parentPath;
-    } else {
-      // File path - get containing directory
-      parentDir = dirname(parentPath);
-    }
-
-    return parentDir;
+    // Convert file:// URL to path if needed
+    return parent.startsWith("file://") ? fileURLToPath(parent) : parent;
   }
 
   /**
