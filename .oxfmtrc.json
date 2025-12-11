@@ -1,8 +1,13 @@
 {
-  "$schema": "https://raw.githubusercontent.com/nicolo-ribaudo/oxc/nicolo-test-oxfmt-schema/npm/oxfmt/schema.json",
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "printWidth": 100,
   "semi": true,
   "trailingComma": "all",
   "endOfLine": "lf",
-  "singleAttributePerLine": true
+  "singleAttributePerLine": true,
+  "experimentalSortImports": {
+    "partitionByNewline": true,
+    "order": "asc",
+    "ignoreCase": true
+  }
 }

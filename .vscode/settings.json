@@ -8,7 +8,7 @@
   "oxc.configPath": ".oxlintrc.json",
   "oxc.fixKind": "safe_fix_or_suggestion",
   "oxc.typeAware": true,
-  "oxc.formatter.enable": true,
+  "oxc.fmt.experimental": true,
 
   // Use oxc as default formatter for JS/TS
   "[typescript]": {

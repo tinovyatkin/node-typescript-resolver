@@ -1,13 +1,13 @@
 {
-  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "oxc"],
   "env": {
     "node": true
   },
   "categories": {
     "correctness": "error",
-    "suspicious": "warn",
-    "perf": "warn"
+    "suspicious": "error",
+    "perf": "error"
   },
   "rules": {
     "typescript/no-unused-vars": [
@@ -22,7 +22,6 @@
         "varsIgnorePattern": "^_"
       }
     ],
-    "typescript/no-explicit-any": "warn",
     "typescript/consistent-type-imports": "error",
     "typescript/no-shadow": "error",
 
@@ -65,37 +64,23 @@
     "unicorn/no-typeof-undefined": "error",
     "unicorn/prevent-abbreviations": "off",
     "unicorn/import-style": "off",
-    "unicorn/no-null": "off",
 
     "no-fallthrough": "error",
-    "no-duplicate-imports": "off",
     "no-console": "error",
 
     "sort-imports": "off",
-    "no-ternary": "off",
-    "func-style": "off",
-    "max-lines-per-function": "off",
-    "eqeqeq": "off",
-    "max-lines": "off",
-    "id-length": "off",
-    "no-magic-numbers": "off",
-    "max-params": "off",
-    "no-await-in-loop": "off",
-    "max-classes-per-file": "off",
-
-    "oxc/approx-constant": "warn",
-    "oxc/no-async-endpoint-handlers": "off"
   },
   "overrides": [
     {
       "files": ["**/tests/**"],
       "rules": {
-        "typescript/no-explicit-any": "off",
-        "typescript/no-unsafe-member-access": "off",
-        "typescript/strict-boolean-expressions": "off",
         "typescript/no-empty-function": "off",
+        "typescript/no-explicit-any": "off",
         "typescript/no-floating-promises": "off",
-        "no-console": "off"
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/strict-boolean-expressions": "off",
+        "no-console": "off",
       }
     }
   ],
