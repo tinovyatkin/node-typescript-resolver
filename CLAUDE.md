@@ -51,10 +51,14 @@ The codebase follows a **three-layer structure**:
 ### 3. Core Resolver Layer (`src/resolver.ts`)
 
 - `TypeScriptResolver` class wraps `oxc-resolver` with TS-specific configuration
+- **Uses `resolveFileSync`/`resolveFileAsync` APIs** (added in oxc-resolver 11.14+):
+  - Accepts file paths directly (no need to extract directory from parent URL)
+  - Automatically discovers tsconfig.json by traversing parent directories
+  - Perfect fit for Node.js loader API which provides parent file URLs
 - **Extension alias mapping**: Maps `.js` → `.ts/.tsx`, `.mjs` → `.mts`, `.cjs` → `.cts`
   - This allows `import './file.js'` to resolve to `./file.ts`
 - TSConfig support via oxc-resolver's built-in `tsconfig` option:
-  - Auto-detects tsconfig.json from the parent directory on each resolution
+  - Auto-detects tsconfig.json from the parent file path on each resolution
   - Handles `baseUrl` and `paths` aliases automatically
   - Supports monorepos and TypeScript composite projects
   - No manual tsconfig parsing needed (oxc-resolver handles it)
@@ -88,8 +92,9 @@ This pattern is critical - do not change it unless you understand the performanc
 
 When `parentURL` is undefined (entry points):
 
-- Derive parent from specifier's directory: `file://.../dir/entry` → parent: `file://.../dir/`
-- Extract bare specifier from file:// URL: `file://.../dir/@app` → specifier: `@app`
+- In loader: Derive parent from specifier's directory: `file://.../dir/entry` → parent: `file://.../dir/`
+- In loader: Extract bare specifier from file:// URL: `file://.../dir/@app` → specifier: `@app`
+- In resolver: Use synthetic file path (`cwd/index.ts`) for tsconfig discovery
 - This enables path aliases to work in monorepos (uses correct subdirectory tsconfig.json)
 
 ### Extension Priority
