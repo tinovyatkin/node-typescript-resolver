@@ -25,10 +25,6 @@ pre-commit:
     yamllint:
       glob: "*.{yml,yaml}"
       run: uvx yamllint {staged_files}
-    ruff-format:
-      glob: "**/*.py"
-      run: uv tool run ruff format --config pyproject.toml {staged_files}
-      stage_fixed: true
     codecov:
       glob: ".codecov.yml"
       run: curl --fail --data-binary @.codecov.yml https://codecov.io/validate
@@ -49,17 +45,8 @@ commit-msg:
     "check spelling":
       run: uvx typos {1}
 
-# post-checkout:
-#   commands:
-#     python-dependencies:
-#       glob: "uv.lock"
-#       run: uv sync
-
 post-merge:
   files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
   commands:
-    python-dependencies:
-      glob: uv.lock
-      run: uv sync
     delete-merged-branches:
       run: git branch --merged | grep -Ev '\*|master|main|dev|develop|development|stag|staging|prod|production' | xargs git branch -d; git fetch --prune;
