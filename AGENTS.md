@@ -13,33 +13,38 @@
 - `npm test` – run the Node.js built-in test runner.
 - `npm run test:ci` – same tests with coverage reporters (lcov + JUnit) for CI.
 - `node --test --test-reporter=dot` – quick local reporter; `node --test tests/resolver.test.ts` for focused runs.
-- `npm run lint` – run oxlint with type-aware rules; `npm run lint:fix` to auto-fix.
-- `npm run format` – format JS/TS files with oxfmt; `npm run format:check` to verify.
+- `npm run lint:fix` – run oxlint.
 - Lefthook runs lint/format automatically on staged files if installed.
 
 ## Architecture Highlights
 
 - Three-layer flow: `index.ts` registers the loader → `loader.ts` implements Node resolve hooks → `resolver.ts` wraps `oxc-resolver`.
-- Non-intrusive resolution: call `nextResolve()` first; handle only `ERR_MODULE_NOT_FOUND`, `ERR_UNSUPPORTED_DIR_IMPORT`, `ERR_INVALID_MODULE_SPECIFIER`, then return `shortCircuit: true`.
+- Non-intrusive resolution: call `nextResolve()` first; handle only `ERR_MODULE_NOT_FOUND`, `ERR_UNSUPPORTED_DIR_IMPORT`,
+  `ERR_INVALID_MODULE_SPECIFIER`, then return `shortCircuit: true`.
 - Extension aliasing maps `.js/.mjs/.cjs` to `.ts/.mts/.cts`; `oxc-resolver` auto-detects the nearest `tsconfig` and applies `baseUrl/paths`.
 - Resolver instances are cached per condition set; avoid `cloneWithOptions()` (breaks resolution).
 
 ## Coding Style & Naming Conventions
 
 - Oxfmt enforces print width 100, semicolons, trailing commas, LF endings for JS/TS files.
-- Oxlint: prefer type-only imports, forbid `console.*` (use a logger or pass one in), disallow unused vars unless prefixed with `_`. Type-aware linting enabled via `--type-aware` flag.
-- Keep modules ESM; names should be descriptive and kebab- or camel-cased to match surrounding files. Tests mirror the module name (`resolver.test.ts` for `resolver.ts`).
+- Oxlint: prefer type-only imports, forbid `console.*` (use a logger or pass one in), disallow unused vars unless prefixed with `_`. Type-aware
+  linting enabled via `--type-aware` flag.
+- Keep modules ESM; names should be descriptive and kebab- or camel-cased to match surrounding files. Tests mirror the module name (
+  `resolver.test.ts` for `resolver.ts`).
 
 ## Testing Guidelines
 
 - Write tests with Node’s `node:test` in `tests/`; use fixtures under `tests/fixtures/` for file-based cases.
 - Aim to keep existing coverage; CI emits `lcov.info` and `junit.xml`. Prefer clear assertion messages over broad snapshots.
-- Name tests `*.test.ts` and isolate side effects (no network or FS writes outside `tests/fixtures/`); resolver tests use `tmpdir()`—clean up in hooks.
+- Name tests `*.test.ts` and isolate side effects (no network or FS writes outside `tests/fixtures/`); resolver tests use `tmpdir()`—clean up in
+  hooks.
 
 ## Commit & Pull Request Guidelines
 
-- Commit messages must pass commitlint: lower-case type {build,chore,ci,ai,docs,feat,fix,perf,refactor,revert,style,test}, optional scope, subject ≤150 chars, no trailing period; body/footers ≤400/150.
-- PRs should describe the change, note test commands executed, link issues, and state if `dist/` was regenerated. Include screenshots only if output/UX changes.
+- Commit messages must pass commitlint: lower-case type {build,chore,ci,ai,docs,feat,fix,perf,refactor,revert,style,test}, optional scope, subject
+  ≤150 chars, no trailing period; body/footers ≤400/150.
+- PRs should describe the change, note test commands executed, link issues, and state if `dist/` was regenerated. Include screenshots only if
+  output/UX changes.
 
 ## Constraints & Safety
 

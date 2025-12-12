@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Node.js loader that provides TypeScript-aware module resolution with minimal performance overhead. It bridges the gap between Node.js's built-in TypeScript support and proper TS import resolution, supporting extensionless imports and tsconfig path aliases.
+This is a Node.js loader that provides TypeScript-aware module resolution with minimal performance overhead. It bridges the gap between Node.js's
+built-in TypeScript support and proper TS import resolution, supporting extensionless imports and tsconfig path aliases.
 
 **Key dependencies:**
 
@@ -26,17 +27,8 @@ node --test --test-reporter=dot
 # Test a single file with TypeScript support
 node --test tests/resolver.test.ts
 
-# Lint with type-aware rules
-npm run lint
-
 # Lint and auto-fix
 npm run lint:fix
-
-# Format code
-npm run format
-
-# Check formatting
-npm run format:check
 ```
 
 ## Architecture
