@@ -35,9 +35,11 @@ jobs:
         run: npm ci
 
       - name: Run Oxlint
+        if: matrix.os == 'ubuntu-latest'
         run: npx oxlint --type-aware
 
       - name: Check formatting
+        if: matrix.os == 'ubuntu-latest'
         run: npm run format:check
 
       - name: TypeScript type check
