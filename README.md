@@ -25,9 +25,20 @@ npm install node-typescript-resolver
 
 ## Prerequisites: Type-Only Import Syntax
 
-Node.js's built-in TypeScript support does not perform import elision—it doesn't analyze which imports are used only as types. This applies to both type stripping mode and `--experimental-transform-types` mode. Imports like `import { SomeType } from './module'` will remain in the emitted JavaScript—causing runtime errors in ESM modules if `SomeType` is only a type (CommonJS will silently get `undefined`).
+Node.js's built-in TypeScript support does not perform import elision—it doesn't
+analyze which imports are used only as types. This applies to both type
+stripping mode and `--experimental-transform-types` mode. Imports like
+`import { SomeType } from './module'` will remain in the emitted
+JavaScript—causing runtime errors in ESM modules if `SomeType` is only a type
+(CommonJS will silently get `undefined`).
 
-We believe `--experimental-transform-types` should handle import elision, and this may improve in future Node.js versions (the flag is still experimental). Check [Node.js TypeScript documentation](https://nodejs.org/en/learn/typescript/run-natively) for updates. Until then, the solution is to use explicit type-only import syntax (`import type { ... }` or `import { type ... }`), enforced through ESLint and TypeScript configuration.
+We believe `--experimental-transform-types` should handle import elision, and
+this may improve in future Node.js versions (the flag is still experimental).
+Check
+[Node.js TypeScript documentation](https://nodejs.org/en/learn/typescript/run-natively)
+for updates. Until then, the solution is to use explicit type-only import syntax
+(`import type { ... }` or `import { type ... }`), enforced through ESLint and
+TypeScript configuration.
 
 ### 1. Install typescript-eslint (if not already installed)
 
@@ -43,7 +54,7 @@ Run this command to automatically fix all type-only imports in your codebase:
 npx eslint --no-config-lookup --ext .ts,.tsx,.mts,.cts \
   --parser @typescript-eslint/parser \
   --plugin @typescript-eslint/eslint-plugin \
-  --rule '@typescript-eslint/consistent-type-imports: [error, {prefer: type-imports, fixStyle: separate-type-imports}]' \
+  --rule '@typescript-eslint/consistent-type-imports:[error, {prefer: type-imports, fixStyle: separate-type-imports}]' \
   --fix .
 ```
 

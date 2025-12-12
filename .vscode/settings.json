@@ -2,6 +2,9 @@
   // Disable ESLint and Biome in favor of oxlint
   "eslint.enable": false,
   "biome.enabled": false,
+  "prettier.enable": false,
+  "markdownlint.lintWorkspaceGlobs": ["!**/*"],
+  "cSpell.enabled": false,
 
   // Enable oxc extension (linter and formatter)
   "oxc.enable": true,
@@ -14,7 +17,8 @@
   "[typescript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.codeActionsOnSave": {
-      "source.fixAll.oxc": "explicit"
+      "source.fixAll.oxc": "explicit",
+      "source.organizeImports": "explicit"
     }
   },
   "[javascript]": {
@@ -28,5 +32,20 @@
   },
   "[javascriptreact]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[markdown]": {
+    "editor.unicodeHighlight.ambiguousCharacters": true,
+    "editor.unicodeHighlight.invisibleCharacters": true,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    },
+    "editor.defaultFormatter": "rvben.rumdl",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit"
+    }
   }
 }
