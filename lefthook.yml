@@ -11,24 +11,26 @@ pre-commit:
       glob: "**/*.ts"
       run: npx -y -q tsc --noEmit
     lint:
-      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,md,html}"
-      run: npx -y -q eslint --cache --fix {staged_files}
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts}"
+      run: npx -y -q oxlint --fix --fix-suggestions {staged_files}
       stage_fixed: true
     format:
-      glob: "*.{json,jsonc,yaml,yml,md,js,html,ts}"
-      run: npx -y -q prettier --cache --no-error-on-unmatched-pattern --write {staged_files}
+      glob: "*.{js,ts,cjs,mjs,mts,cts,jsx,tsx,json,yml,yaml}"
+      run: npx -y -q oxfmt --no-error-on-unmatched-pattern --write {staged_files}
       stage_fixed: true
     taplo:
       glob: "**/*.toml"
       run: npx -y -q taplo format {staged_files}
       stage_fixed: true
+    rumdl:
+      glob: "**/*.md"
+      run: uv tool run rumdl check --fix --output-format concise {staged_files}
     yamllint:
       glob: "*.{yml,yaml}"
       run: uvx yamllint {staged_files}
-    ruff-format:
-      glob: "**/*.py"
-      run: uv tool run ruff format --config pyproject.toml {staged_files}
-      stage_fixed: true
+    typos:
+      glob: "*.{py,js,ts,tsx,toml,yaml,yml,json,html,css,md,txt,rst,tex}"
+      run: uv tool run typos --force-exclude {staged_files}
     codecov:
       glob: ".codecov.yml"
       run: curl --fail --data-binary @.codecov.yml https://codecov.io/validate
@@ -47,19 +49,10 @@ commit-msg:
     "lint commit message":
       run: npx -y -q commitlint --edit {1}
     "check spelling":
-      run: uvx typos {1}
-
-# post-checkout:
-#   commands:
-#     python-dependencies:
-#       glob: "uv.lock"
-#       run: uv sync
+      run: uv tool run typos {1}
 
 post-merge:
   files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
   commands:
-    python-dependencies:
-      glob: uv.lock
-      run: uv sync
     delete-merged-branches:
       run: git branch --merged | grep -Ev '\*|master|main|dev|develop|development|stag|staging|prod|production' | xargs git branch -d; git fetch --prune;

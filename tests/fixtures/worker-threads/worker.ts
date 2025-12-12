@@ -1,5 +1,6 @@
 // Worker thread implementation - imports another TS file to test two-level imports
 import { parentPort } from "node:worker_threads";
+
 import { computeResult, metadata } from "./utils";
 
 if (!parentPort) {
