@@ -2,8 +2,29 @@
   "name": "node-typescript-resolver",
   "version": "0.8.0",
   "description": "Companion loader for Node.js's built-in TypeScript support that adds TypeScript-aware import resolution",
-  "main": "./dist/require.js",
+  "keywords": [
+    "esm",
+    "extensionless",
+    "import",
+    "loader",
+    "node",
+    "paths",
+    "resolver",
+    "tsconfig",
+    "typescript"
+  ],
+  "homepage": "https://github.com/tinovyatkin/node-typescript-resolver#readme",
+  "bugs": {
+    "url": "https://github.com/tinovyatkin/node-typescript-resolver/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tinovyatkin/node-typescript-resolver.git"
+  },
+  "author": "Konstantin Vyatkin <tino@vtkn.io>",
+  "license": "MIT",
   "type": "module",
+  "main": "./dist/require.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -17,9 +38,9 @@
     }
   },
   "files": [
-    "dist",
+    "LICENSE",
     "README.md",
-    "LICENSE"
+    "dist"
   ],
   "scripts": {
     "build": "tsc",
@@ -30,30 +51,6 @@
     "test": "node --test",
     "test:ci": "node --test --experimental-test-coverage --test-reporter spec --test-reporter-destination stdout --test-reporter node-test-github-reporter --test-reporter-destination stdout --test-reporter lcov --test-reporter-destination lcov.info --test-reporter junit --test-reporter-destination junit.xml",
     "prepublishOnly": "npm run build"
-  },
-  "keywords": [
-    "typescript",
-    "resolver",
-    "loader",
-    "node",
-    "import",
-    "esm",
-    "extensionless",
-    "tsconfig",
-    "paths"
-  ],
-  "author": "Konstantin Vyatkin <tino@vtkn.io>",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/tinovyatkin/node-typescript-resolver.git"
-  },
-  "bugs": {
-    "url": "https://github.com/tinovyatkin/node-typescript-resolver/issues"
-  },
-  "homepage": "https://github.com/tinovyatkin/node-typescript-resolver#readme",
-  "engines": {
-    "node": ">=22.15.0"
   },
   "dependencies": {
     "oxc-resolver": "^11.15.0"
@@ -67,5 +64,8 @@
     "oxlint-tsgolint": "^0.9.0",
     "type-fest": "5.3.1",
     "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22.15.0"
   }
 }
