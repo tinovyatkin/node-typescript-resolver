@@ -8,6 +8,7 @@
     "enabled": true,
     "automerge": true
   },
+  "enabledManagers": ["bun", "github-actions"],
   "schedule": ["after 9am and before 5pm every weekday", "every weekend"],
   "timezone": "UTC",
   "labels": ["dependencies", "renovate"],
@@ -17,11 +18,7 @@
   "packageRules": [
     {
       "matchDepTypes": ["dependencies"],
-      "postUpgradeTasks": {
-        "commands": ["npm version patch --no-git-tag-version"],
-        "fileFilters": ["package.json"],
-        "executionMode": "update"
-      }
+      "bumpVersion": "patch"
     }
   ]
 }
